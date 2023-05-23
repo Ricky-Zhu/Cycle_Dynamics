@@ -9,7 +9,7 @@ import TD3
 
 def safe_path(path):
 	if not os.path.exists(path):
-		os.mkdir(path)
+		os.makedirs(path)
 	return path
 
 # Runs policy for X episodes and returns average reward
@@ -109,8 +109,7 @@ def main(args):
 
 		if done:
 			# +1 to account for 0 indexing. +0 on ep_timesteps since it will increment +1 even if done=True
-			print(
-				f"Total T: {t + 1} Episode Num: {episode_num + 1} Episode T: {episode_timesteps} Reward: {episode_reward:.3f}")
+
 			# Reset environment
 			state, done = env.reset(), False
 			episode_reward = 0
@@ -119,6 +118,8 @@ def main(args):
 
 		# Evaluate episode
 		if (t + 1) % args.eval_freq == 0:
+			print(
+				f"Total T: {t + 1} Episode Num: {episode_num + 1} Episode T: {episode_timesteps}")
 			evaluations.append(eval_policy(policy, args.env, args.seed))
 			np.save(os.path.join(result_path, '{}'.format(file_name)), evaluations)
 			if args.save_model: policy.save(os.path.join(model_path, '{}'.format(file_name)))
@@ -128,11 +129,11 @@ def main(args):
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser()
 	parser.add_argument("--policy", default="TD3")                  # Policy name (TD3, DDPG or OurDDPG)
-	parser.add_argument("--env", default="HalfCheetah-v2")          # OpenAI gym environment name
+	parser.add_argument("--env", default="Swimmer-v2")          # OpenAI gym environment name
 	parser.add_argument("--seed", default=0, type=int)              # Sets Gym, PyTorch and Numpy seeds
 	parser.add_argument("--start_timesteps", default=25e3, type=int)# Time steps initial random policy is used
-	parser.add_argument("--eval_freq", default=5e3, type=int)       # How often (time steps) we evaluate
-	parser.add_argument("--max_timesteps", default=1.7e5, type=int)   # Max time steps to run environment
+	parser.add_argument("--eval_freq", default=1e4, type=int)       # How often (time steps) we evaluate
+	parser.add_argument("--max_timesteps", default=1e6, type=int)   # Max time steps to run environment
 	parser.add_argument("--expl_noise", default=0.1)                # Std of Gaussian exploration noise
 	parser.add_argument("--batch_size", default=256, type=int)      # Batch size for both actor and critic
 	parser.add_argument("--discount", default=0.99)                 # Discount factor
@@ -143,7 +144,7 @@ if __name__ == "__main__":
 	parser.add_argument("--save_model", default=True)               # Save model and optimizer parameters
 	parser.add_argument("--load_model", default="")                 # Model load file name, "" doesn't load, "default" uses file_name
 
-	parser.add_argument("--log_root", default="../../../../logs/cross_morphology")
+	parser.add_argument("--log_root", default="../../../logs/cross_morphology")
 	args = parser.parse_args()
 
 	main(args)
