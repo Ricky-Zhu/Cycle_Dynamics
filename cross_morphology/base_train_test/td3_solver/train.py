@@ -119,7 +119,7 @@ def main(args):
 		# Evaluate episode
 		if (t + 1) % args.eval_freq == 0:
 			print(
-				f"Total T: {t + 1} Episode Num: {episode_num + 1} Episode T: {episode_timesteps}")
+				f"Total T: {t + 1} Episode Num: {episode_num + 1}")
 			evaluations.append(eval_policy(policy, args.env, args.seed))
 			np.save(os.path.join(result_path, '{}'.format(file_name)), evaluations)
 			if args.save_model: policy.save(os.path.join(model_path, '{}'.format(file_name)))
@@ -129,7 +129,7 @@ def main(args):
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser()
 	parser.add_argument("--policy", default="TD3")                  # Policy name (TD3, DDPG or OurDDPG)
-	parser.add_argument("--env", default="Swimmer-v2")          # OpenAI gym environment name
+	parser.add_argument("--env", default="HalfCheetah-v2")          # OpenAI gym environment name
 	parser.add_argument("--seed", default=0, type=int)              # Sets Gym, PyTorch and Numpy seeds
 	parser.add_argument("--start_timesteps", default=25e3, type=int)# Time steps initial random policy is used
 	parser.add_argument("--eval_freq", default=1e4, type=int)       # How often (time steps) we evaluate

@@ -1,14 +1,14 @@
-
-
 import numpy as np
 import torch
 import gym
+from modified_envs import *
 import os
 import torch.nn as nn
 import torch.nn.functional as F
 
 from tqdm import tqdm
 from PIL import Image
+
 
 class Actor(nn.Module):
     def __init__(self, state_dim, action_dim, max_action):
@@ -23,24 +23,26 @@ class Actor(nn.Module):
         a = F.relu(self.l2(a))
         return self.max_action * torch.tanh(self.l3(a))
 
+
 class TD3(object):
-    def __init__(self,policy_path,state_dim,action_dim,max_action,opt):
+    def __init__(self, policy_path, state_dim, action_dim, max_action, opt):
         self.actor = Actor(state_dim, action_dim, max_action).cuda()
         self.opt = opt
         self.weight_path = policy_path
         self.actor.load_state_dict(torch.load(self.weight_path))
         print('policy weight loaded!')
-        self.env_logs = os.path.join(self.opt.log_root, '{}_data'.format(self.opt.env))
+        self.source_env_logs = os.path.join(self.opt.log_root, '{}_data'.format(self.opt.env))
+        self.target_env_logs = os.path.join(self.opt.log_root, '{}_data'.format(self.opt.target_env))
         self.clip_range = 5
-        self.mean1,self.std1 = self.get_mean_std(opt.data_type1,opt.data_id1)
-        self.mean2,self.std2 = self.get_mean_std(opt.data_type2,opt.data_id2)
+        self.mean1, self.std1 = self.get_mean_std(self.source_env_logs, opt.data_type1, opt.data_id1)
+        self.mean2, self.std2 = self.get_mean_std(self.target_env_logs, opt.data_type2, opt.data_id2)
 
     def select_action(self, state):
         state = torch.FloatTensor(state.reshape(1, -1)).cuda()
         action = self.actor(state).cpu().data.numpy().flatten()
         return action
 
-    def select_cross_action(self,state,gxmodel,axmodel):
+    def select_cross_action(self, state, gxmodel, axmodel):
         state = torch.tensor(state).float().cuda()
         state = (state - self.mean2) / self.std2
 
@@ -56,22 +58,22 @@ class TD3(object):
         action = action.cpu().data.numpy()
         return action
 
-    def get_mean_std(self,data_type,data_id):
-        data_path = os.path.join(self.env_logs, '{}_{}'.format(data_type, data_id))
-        mean_std_path = os.path.join(data_path,'now_state.npy')
+    def get_mean_std(self, prefix, data_type, data_id):
+        data_path = os.path.join(prefix, '{}_{}'.format(data_type, data_id))
+        mean_std_path = os.path.join(data_path, 'now_state.npy')
         data = np.load(mean_std_path)
         mean = torch.tensor(data.mean(0)).float().cuda()
         std = torch.tensor(data.std(0)).float().cuda()
-        std[(abs(std<0.1))] = 1
-        return mean,std
+        std[(abs(std < 0.1))] = 1
+        return mean, std
 
 
 class CrossPolicy:
-    def __init__(self,opt):
+    def __init__(self, opt):
         self.opt = opt
-        self.env_name = opt.env
+        self.env_name = opt.target_env
         self.policy_path = os.path.join(opt.log_root,
-                 '{}_base/models/TD3_{}_0_actor'.format(opt.env, opt.env))
+                                        '{}_base/models/TD3_{}_0_actor'.format(opt.env, opt.env))
         self.state_dim = opt.state_dim1
         self.action_dim = opt.action_dim1
         self.max_action = 1
@@ -91,7 +93,7 @@ class CrossPolicy:
         eval_env = self.env
         state_buffer = []
         action_buffer = []
-        avg_reward,new_reward = 0.,0.
+        avg_reward, new_reward = 0., 0.
         save_flag = False
         if imgpath is not None:
             if not os.path.exists(imgpath):
@@ -101,13 +103,13 @@ class CrossPolicy:
         for i in tqdm(range(eval_episodes)):
             state, done = eval_env.reset(), False
             if save_flag:
-                episode_path = os.path.join(imgpath,'episode_{}'.format(i))
+                episode_path = os.path.join(imgpath, 'episode_{}'.format(i))
                 if not os.path.exists(episode_path):
                     os.mkdir(episode_path)
             count = 0
             while not done:
                 state = np.array(state)
-                action = self.policy.select_cross_action(state,gxmodel,axmodel)
+                action = self.policy.select_cross_action(state, gxmodel, axmodel)
 
                 state_buffer.append(state)
                 action_buffer.append(action)
@@ -132,4 +134,3 @@ class CrossPolicy:
         print("-----------------------------------------------")
 
         return avg_reward
-

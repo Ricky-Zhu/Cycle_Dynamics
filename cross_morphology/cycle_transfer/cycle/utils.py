@@ -11,24 +11,27 @@ import torch
 import torch.nn as nn
 from torch.autograd import Variable
 
+
 def safe_path(path):
     if not os.path.exists(path):
-        os.mkdir(path)
+        os.makedirs(path)
     return path
 
+
 def init_logs(opt):
-    log_dir = safe_path(os.path.join(opt.log_root, '{}_data'.format(opt.env),
-                       'exp_{}_{}_{}_{}'.format(opt.data_type1, opt.data_id1, opt.data_type2,opt.data_id2)))
+    log_dir = safe_path(os.path.join(opt.log_root, '{}_{}'.format(opt.env, opt.target_env),
+                                     'exp_{}_{}_{}_{}'.format(opt.data_type1, opt.data_id1, opt.data_type2,
+                                                              opt.data_id2)))
     if opt.istrain:
         img_logs = safe_path(os.path.join(log_dir, 'train'))
-        txt_logs = os.path.join(log_dir,'train_log.txt')
-        txt_logs = open(txt_logs,'w')
+        txt_logs = os.path.join(log_dir, 'train_log.txt')
+        txt_logs = open(txt_logs, 'w')
     else:
-        img_logs = safe_path(os.path.join(log_dir,'eval'))
+        img_logs = safe_path(os.path.join(log_dir, 'eval'))
         txt_logs = os.path.join(log_dir, 'eval_log.txt')
         txt_logs = open(txt_logs, 'w')
     weight_logs = safe_path(os.path.join(log_dir, 'weights'))
-    return txt_logs,img_logs,weight_logs
+    return txt_logs, img_logs, weight_logs
 
 
 class ImagePool():
@@ -51,7 +54,7 @@ class ImagePool():
             else:
                 p = random.uniform(0, 1)
                 if p > 0.5:
-                    random_id = random.randint(0, self.pool_size-1)
+                    random_id = random.randint(0, self.pool_size - 1)
                     tmp = self.images[random_id].clone()
                     self.images[random_id] = image
                     return_images.append(tmp)
@@ -59,6 +62,7 @@ class ImagePool():
                     return_images.append(image)
         return_images = Variable(torch.cat(return_images, 0))
         return return_images
+
 
 class GANLoss(nn.Module):
     def __init__(self, use_lsgan=True, target_real_label=1.0, target_fake_label=0.0,
@@ -97,21 +101,21 @@ class GANLoss(nn.Module):
         return self.loss(input, target_tensor)
 
 
-def my_load(model,pretrained_dict):
+def my_load(model, pretrained_dict):
     current_dict = model.state_dict()
     new_state_dict = OrderedDict()
     for key in current_dict.keys():
         if key in pretrained_dict.keys():
             new_state_dict[key] = pretrained_dict[key]
         elif 'encoder1' in key:
-            if pretrained_dict[key.replace('encoder1','encoder')].shape == current_dict[key].shape:
-                new_state_dict[key] = pretrained_dict[key.replace('encoder1','encoder')]
+            if pretrained_dict[key.replace('encoder1', 'encoder')].shape == current_dict[key].shape:
+                new_state_dict[key] = pretrained_dict[key.replace('encoder1', 'encoder')]
             else:
                 print("weight {} lost!".format(key))
                 new_state_dict[key] = current_dict[key]
         elif 'encoder2' in key:
             if pretrained_dict[key.replace('encoder2', 'encoder')].shape == current_dict[key].shape:
-                new_state_dict[key] = pretrained_dict[key.replace('encoder2','encoder')]
+                new_state_dict[key] = pretrained_dict[key.replace('encoder2', 'encoder')]
             else:
                 print("weight {} lost!".format(key))
                 new_state_dict[key] = current_dict[key]
@@ -125,24 +129,27 @@ def my_load(model,pretrained_dict):
 import imageio
 import os
 
-def compose_gif(folder,gif_file):
+
+def compose_gif(folder, gif_file):
     img_paths = os.listdir(folder)
     gif_images = []
-    for i,path in enumerate(img_paths[:30]):
-        if i%2==0:
+    for i, path in enumerate(img_paths[:30]):
+        if i % 2 == 0:
             continue
-        path = os.path.join(folder,path)
+        path = os.path.join(folder, path)
         gif_images.append(imageio.imread(path))
-    imageio.mimsave(gif_file,gif_images,fps=3)
+    imageio.mimsave(gif_file, gif_images, fps=3)
+
 
 def main():
     # agent = DSPdata()
     # data = agent.sample(1000,'vary_xy')
     # print(data.shape)
-    for exp_id in range(1,6):
+    for exp_id in range(1, 6):
         folder = '../explogs{}/eval'.format(exp_id)
         gif_file = '../eval_{}.gif'.format(exp_id)
-        compose_gif(folder,gif_file)
+        compose_gif(folder, gif_file)
+
 
 if __name__ == '__main__':
     main()

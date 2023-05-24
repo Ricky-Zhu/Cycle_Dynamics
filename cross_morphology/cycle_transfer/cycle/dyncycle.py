@@ -11,9 +11,9 @@ import matplotlib.pyplot as plt
 import itertools
 
 
-from cycle.models import S2S,SDmodel,AGmodel,ADmodel,Fengine
-from cycle.utils import ImagePool,GANLoss
-from cycle.crosspolicy import CrossPolicy
+from .models import S2S,SDmodel,AGmodel,ADmodel,Fengine
+from .utils import ImagePool,GANLoss
+from .crosspolicy import CrossPolicy
 
 class CycleGANModel():
     def __init__(self,opt):

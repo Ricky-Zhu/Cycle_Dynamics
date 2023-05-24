@@ -1,4 +1,4 @@
-
+from modified_envs import *
 import os
 import gym
 import torch
@@ -8,12 +8,13 @@ import numpy as np
 from tqdm import tqdm
 from PIL import Image
 import torch.nn as nn
+
 import torch.nn.functional as F
 
 
 def safe_path(path):
     if not os.path.exists(path):
-        os.mkdir(path)
+        os.makedirs(path)
     return path
 
 
@@ -157,12 +158,12 @@ class CycleData:
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='control dataset analyzer')
-    parser.add_argument("--env", default="HalfCheetah-v2")
+    parser.add_argument("--env", default="HalfCheetah_3leg-v2")
     parser.add_argument("--force", type=bool, default=False)
-    parser.add_argument("--log_root", default="../../../logs/cross_morphology")
-    parser.add_argument('--data_type', type=str, default='base', help='data type')
+    parser.add_argument("--log_root", default="../../logs/cross_morphology")
+    parser.add_argument('--data_type', type=str, default='3leg', help='data type')
     parser.add_argument('--data_id', type=int, default=1, help='data id')
-    parser.add_argument('--episode_n', type=int, default=1000, help='episode number')
+    parser.add_argument('--episode_n', type=int, default=20, help='episode number')
     opt = parser.parse_args()
 
     dataset = CycleData(opt)
