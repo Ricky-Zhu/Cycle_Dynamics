@@ -1,3 +1,6 @@
+import sys
+from os.path import dirname, abspath
+sys.path.append(dirname(dirname(dirname(abspath(__file__)))))
 from modified_envs import *
 import os
 import gym
@@ -163,7 +166,7 @@ if __name__ == '__main__':
     parser.add_argument("--log_root", default="../../logs/cross_morphology")
     parser.add_argument('--data_type', type=str, default='3leg', help='data type')
     parser.add_argument('--data_id', type=int, default=1, help='data id')
-    parser.add_argument('--episode_n', type=int, default=20, help='episode number')
+    parser.add_argument('--episode_n', type=int, default=1000, help='episode number')
     opt = parser.parse_args()
 
     dataset = CycleData(opt)

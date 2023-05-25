@@ -170,7 +170,7 @@ class Fengine:
             now = now[idx]
             act = act[idx]
             nxt = nxt[idx]
-            for i in tqdm(range(data_size)):
+            for i in range(data_size):
                 start = i*batch_size
                 end = start+batch_size
                 state = torch.tensor(now[start:end]).float().cuda()
@@ -184,7 +184,6 @@ class Fengine:
                 optimizer.step()
                 epoch_loss += loss.item()
                 cmp_loss += loss_fn(state,result).item()
-            print('epoch:{} loss:{:.7f} cmp:{:.7f}'.format(epoch,
-                    epoch_loss / data_size,cmp_loss / data_size))
-            torch.save(self.fmodel.state_dict(),weight_path)
 
+            torch.save(self.fmodel.state_dict(),weight_path)
+        print('loss:{:.7f} cmp:{:.7f}'.format(epoch_loss / data_size, cmp_loss / data_size))

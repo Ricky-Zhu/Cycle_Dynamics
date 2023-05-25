@@ -1,6 +1,9 @@
 import numpy as np
 import torch
 import gym
+import sys
+from os.path import dirname, abspath
+sys.path.append(dirname(dirname(dirname(dirname(abspath(__file__))))))
 from modified_envs import *
 import os
 import torch.nn as nn
