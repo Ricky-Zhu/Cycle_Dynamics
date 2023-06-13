@@ -8,7 +8,7 @@ python collect_data.py --data_type '3leg' --data_id 1 --env HalfCheetah_3leg-v2
 
 ## obtain the policy in the source domain
 ```shell
-cd base_train_test
+cd base_train_test/td3_solver
 python train.py 
 ```
 
