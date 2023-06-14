@@ -68,8 +68,8 @@ class CycleData:
         self.max_action = float(self.env.action_space.high[0])
         self.log_root = opt.log_root
         self.episode_n = opt.episode_n
-        self.policy_path = os.path.join(opt.log_root,
-                        '{}_base/models/TD3_{}_0_actor'.format(opt.env,opt.env))
+        # self.policy_path = os.path.join(opt.log_root,
+        #                 '{}_base/models/TD3_{}_0_actor'.format(opt.env,opt.env))
         # self.policy = TD3(self.policy_path,self.state_dim,self.action_dim,self.max_action)
         self.setup(opt)
         self.create_data()
@@ -79,7 +79,7 @@ class CycleData:
     def setup(self,opt):
         self.episode_n = opt.episode_n
         self.env_logs = safe_path(os.path.join(self.log_root, '{}_data'.format(self.opt.env)))
-        self.data_root = safe_path(os.path.join(self.env_logs, '{}_{}'.format(self.opt.data_type, self.opt.data_id)))
+        self.data_root = safe_path(os.path.join(self.env_logs, '{}'.format( self.opt.data_id)))
         self.img_path = safe_path(os.path.join(self.data_root,'imgs'))
 
     def create_data(self):
@@ -116,7 +116,7 @@ class CycleData:
 
     def collect_data(self):
         self.env.close()
-        self.norm_state()
+        self.norm_state() # make now_state, action, next_state as arrays
         self.pair_n = self.now_state.shape[0]
         assert (self.pair_n == self.next_state.shape[0])
         assert (self.pair_n == self.action.shape[0])
@@ -163,8 +163,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='control dataset analyzer')
     parser.add_argument("--env", default="HalfCheetah_3leg-v2")
     parser.add_argument("--force", type=bool, default=False)
-    parser.add_argument("--log_root", default="../../logs/cross_morphology")
-    parser.add_argument('--data_type', type=str, default='3leg', help='data type')
+    parser.add_argument("--log_root", default="../../logs/cross_morphology/data")
+    # parser.add_argument('--data_type', type=str, default='3leg', help='data type')
     parser.add_argument('--data_id', type=int, default=1, help='data id')
     parser.add_argument('--episode_n', type=int, default=1000, help='episode number')
     opt = parser.parse_args()

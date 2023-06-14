@@ -8,16 +8,16 @@ def get_options():
     parser.add_argument('--exp_id', default=10, type=int)
     parser.add_argument("--env", default="HalfCheetah-v2")
     parser.add_argument("--target_env", default="HalfCheetah_3leg-v2")
-    parser.add_argument('--data_type1', type=str, default='base', help='data type')
-    parser.add_argument('--data_type2', type=str, default='3leg', help='data type')
+    # parser.add_argument('--data_type1', type=str, default='base', help='data type')
+    # parser.add_argument('--data_type2', type=str, default='3leg', help='data type')
     parser.add_argument('--data_id1', type=int, default=1, help='data id')
     parser.add_argument('--data_id2', type=int, default=1, help='data id')
 
-    parser.add_argument('--state_dim1', default=17, type=int)
-    parser.add_argument('--action_dim1', default=6, type=int)
+    # parser.add_argument('--state_dim1', default=17, type=int)
+    # parser.add_argument('--action_dim1', default=6, type=int)
 
-    parser.add_argument('--state_dim2', default=23, type=int)
-    parser.add_argument('--action_dim2', default=9, type=int)
+    # parser.add_argument('--state_dim2', default=23, type=int)
+    # parser.add_argument('--action_dim2', default=9, type=int)
 
     parser.add_argument('--cut_state1', default=0, type=int)
     parser.add_argument('--cut_state2', default=0, type=int)

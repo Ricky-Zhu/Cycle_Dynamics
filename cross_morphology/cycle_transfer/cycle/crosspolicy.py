@@ -34,11 +34,11 @@ class TD3(object):
         self.weight_path = policy_path
         self.actor.load_state_dict(torch.load(self.weight_path))
         print('policy weight loaded!')
-        self.source_env_logs = os.path.join(self.opt.log_root, '{}_data'.format(self.opt.env))
-        self.target_env_logs = os.path.join(self.opt.log_root, '{}_data'.format(self.opt.target_env))
+        self.source_env_logs = os.path.join(self.opt.log_root, 'data/{}_data'.format(self.opt.env))
+        self.target_env_logs = os.path.join(self.opt.log_root, 'data/{}_data'.format(self.opt.target_env))
         self.clip_range = 5
-        self.mean1, self.std1 = self.get_mean_std(self.source_env_logs, opt.data_type1, opt.data_id1)
-        self.mean2, self.std2 = self.get_mean_std(self.target_env_logs, opt.data_type2, opt.data_id2)
+        self.mean1, self.std1 = self.get_mean_std(self.source_env_logs, opt.data_id1)
+        self.mean2, self.std2 = self.get_mean_std(self.target_env_logs, opt.data_id2)
 
     def select_action(self, state):
         state = torch.FloatTensor(state.reshape(1, -1)).cuda()
@@ -61,8 +61,8 @@ class TD3(object):
         action = action.cpu().data.numpy()
         return action
 
-    def get_mean_std(self, prefix, data_type, data_id):
-        data_path = os.path.join(prefix, '{}_{}'.format(data_type, data_id))
+    def get_mean_std(self, prefix, data_id):
+        data_path = os.path.join(prefix, '{}'.format(data_id))
         mean_std_path = os.path.join(data_path, 'now_state.npy')
         data = np.load(mean_std_path)
         mean = torch.tensor(data.mean(0)).float().cuda()

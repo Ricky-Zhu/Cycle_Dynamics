@@ -10,11 +10,11 @@ class CycleData:
         self.log_root = opt.log_root
 
         # source data root
-        self.data_root1 = os.path.join(self.log_root, '{}_data'.format(self.opt.env),
-                                       '{}_{}'.format(self.opt.data_type1, self.opt.data_id1))
+        self.data_root1 = os.path.join(self.log_root, 'data/{}_data'.format(self.opt.env),
+                                       '{}'.format(self.opt.data_id1))
         # target data root
-        self.data_root2 = os.path.join(self.log_root, '{}_data'.format(self.opt.target_env),
-                                       '{}_{}'.format(self.opt.data_type2, self.opt.data_id2))
+        self.data_root2 = os.path.join(self.log_root, 'data/{}_data'.format(self.opt.target_env),
+                                       '{}'.format(self.opt.data_id2))
         self.data1 = self.collect(self.data_root1, opt.state_dim1)
         self.data2 = self.collect(self.data_root2, opt.state_dim2)
         print('----------- Dataset initialized ---------------')

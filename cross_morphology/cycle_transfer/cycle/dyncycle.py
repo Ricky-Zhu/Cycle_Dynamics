@@ -1,5 +1,3 @@
-
-
 import os
 import torch
 from tqdm import tqdm
@@ -10,30 +8,39 @@ from torchvision import transforms
 import matplotlib.pyplot as plt
 import itertools
 
-
-from .models import S2S,SDmodel,AGmodel,ADmodel,Fengine
-from .utils import ImagePool,GANLoss
+from .models import S2S, SDmodel, AGmodel, ADmodel, Fengine
+from .utils import ImagePool, GANLoss
 from .crosspolicy import CrossPolicy
 
+
 class CycleGANModel():
-    def __init__(self,opt):
+    def __init__(self, opt):
         self.opt = opt
         self.isTrain = opt.istrain
         self.Tensor = torch.cuda.FloatTensor
 
+        # A -> target, B -> source
+
+        # load the pre-trained policy in the source domain, while the eval env is the target env
         self.cross_policy = CrossPolicy(opt)
+        # state mapping: target -> source
         self.netG_B = S2S(opt).cuda()
-        self.net_action_G_A = AGmodel(opt,'1to2').cuda()
-        self.net_action_G_B = AGmodel(opt,'2to1').cuda()
+        # action mapping: source -> target
+        self.net_action_G_A = AGmodel(opt, '1to2').cuda()
+        # action mapping: target -> source
+        self.net_action_G_B = AGmodel(opt, '2to1').cuda()
+        # source forward dynamics model
         self.fengine = Fengine(opt)
         self.netF_A = self.fengine.fmodel.cuda()
+
+        # action discriminator target
         self.net_action_D_A = ADmodel(opt, '1to2').cuda()
+        # action discriminator source
         self.net_action_D_B = ADmodel(opt, '2to1').cuda()
 
         self.reset_buffer()
+        # source state discriminator
         self.netD_B = SDmodel(opt).cuda()
-
-
 
         self.fake_A_pool = ImagePool(pool_size=128)
         self.fake_B_pool = ImagePool(pool_size=128)
@@ -48,10 +55,10 @@ class CycleGANModel():
             self.criterionCycle = torch.nn.MSELoss()
             self.criterionIdt = torch.nn.MSELoss()
         # initialize optimizers
-        self.optimizer_G = torch.optim.Adam([{'params':self.netF_A.parameters(),'lr':0.0},
+        self.optimizer_G = torch.optim.Adam([{'params': self.netF_A.parameters(), 'lr': 0.0},
                                              {'params': self.net_action_G_A.parameters(), 'lr': opt.lr_Ax},
                                              {'params': self.net_action_G_B.parameters(), 'lr': opt.lr_Ax},
-                                             {'params':self.netG_B.parameters(),'lr':opt.lr_Gx}])
+                                             {'params': self.netG_B.parameters(), 'lr': opt.lr_Gx}])
         self.optimizer_D_B = torch.optim.Adam(self.netD_B.parameters())
         self.optimizer_D_action_B = torch.optim.Adam(self.net_action_D_B.parameters())
         self.optimizer_D_action_A = torch.optim.Adam(self.net_action_D_A.parameters())
@@ -61,7 +68,7 @@ class CycleGANModel():
         print('---------- Networks initialized ---------------')
         print('-----------------------------------------------')
 
-    def update(self,opt):
+    def update(self, opt):
         self.init_start = opt.init_start
         self.net_action_G_A.init_start = opt.init_start
         self.net_action_G_B.init_start = opt.init_start
@@ -74,7 +81,7 @@ class CycleGANModel():
         print('-----------------------------------------------\n')
 
     def set_input(self, input):
-        data1,data2 = input
+        data1, data2 = input
         self.input_At0 = self.Tensor(data1[0])
         self.action_A = self.Tensor(data1[1])
         self.input_At1 = self.Tensor(data1[2])
@@ -135,19 +142,18 @@ class CycleGANModel():
         lambda_G_action_B = self.opt.lambda_GactB
         lambda_cycle_action = self.opt.lambda_Gcyc
         lambda_F = self.opt.lambda_F
-        
+
         # ***************************
         #       action cycle part
         # ***************************
 
         # action cycle of B
-        fake_action_A = self.net_action_G_B(self.action_B)
+        fake_action_A = self.net_action_G_B(self.action_B)  # target action to source action
         back_action_B = self.net_action_G_A(fake_action_A)
 
         pred_fake_action_A = self.net_action_D_B(fake_action_A)
         loss_G_action_B = self.criterionGAN(pred_fake_action_A, True) * lambda_G_action_B
-        loss_action_cycle_B = self.criterionCycle(back_action_B,self.action_B) * lambda_cycle_action
-
+        loss_action_cycle_B = self.criterionCycle(back_action_B, self.action_B) * lambda_cycle_action
 
         # action cycle of A
         fake_action_B = self.net_action_G_A(self.action_A)
@@ -157,27 +163,26 @@ class CycleGANModel():
         loss_G_action_A = self.criterionGAN(pred_fake_action_B, True) * lambda_G_action_A
         loss_action_cycle_A = self.criterionCycle(back_action_A, self.action_A) * lambda_cycle_action
 
-        loss_action_cycle = loss_G_action_B+loss_action_cycle_B+loss_G_action_A+loss_action_cycle_A
-
+        loss_action_cycle = loss_G_action_B + loss_action_cycle_B + loss_G_action_A + loss_action_cycle_A
 
         # ***************************
         #       state cycle part
         # ***************************
-        
+
         # GAN loss D_B(G_B(B))
         fake_At0 = self.netG_B(self.real_Bt0)
         pred_fake = self.netD_B(fake_At0)
         loss_G_Bt0 = self.criterionGAN(pred_fake, True) * lambda_G_B0
 
         # GAN loss D_B(G_B(B))
-        fake_At1 = self.netF_A(fake_At0,fake_action_A)
+        fake_At1 = self.netF_A(fake_At0, fake_action_A)
         pred_fake = self.netD_B(fake_At1)
         loss_G_Bt1 = self.criterionGAN(pred_fake, True) * lambda_G_B1
 
         # cycle loss
         pred_At1 = self.netG_B(self.real_Bt1)
         cycle_label = torch.zeros_like(fake_At1).float().cuda()
-        loss_cycle = self.criterionCycle(fake_At1-pred_At1,cycle_label) * lambda_F
+        loss_cycle = self.criterionCycle(fake_At1 - pred_At1, cycle_label) * lambda_F
 
         # ***************************
         #       loss backward part
@@ -207,7 +212,7 @@ class CycleGANModel():
         self.loss_action_cycle_A = loss_action_cycle_A.item()
         self.loss_action_cycle_B = loss_action_cycle_B.item()
 
-        self.loss_state_lt0,self.loss_state_lt1 = 0,0
+        self.loss_state_lt0, self.loss_state_lt1 = 0, 0
 
         self.gt0 = self.real_Bt0
         self.gt1 = self.real_Bt1
@@ -215,7 +220,6 @@ class CycleGANModel():
         self.gt_buffer1.append(self.gt1.cpu().data.numpy())
         self.pred_buffer.append(self.fake_At0.cpu().data.numpy())
         self.pred_buffer1.append(self.fake_At1.cpu().data.numpy())
-
 
     def optimize_parameters(self):
         # forward
@@ -244,7 +248,7 @@ class CycleGANModel():
         fake_B = (self.fake_At0.cpu().data.numpy(),
                   self.action_B.cpu().data.numpy(),
                   self.fake_At1.cpu().data.numpy())
-        return (real_B,fake_B)
+        return (real_B, fake_B)
 
     def get_current_errors(self):
         ret_errors = OrderedDict([
@@ -276,7 +280,7 @@ class CycleGANModel():
         weight_path = os.path.join(path, weight_filename)
         network.load_state_dict(torch.load(weight_path))
 
-    def load(self,path):
+    def load(self, path):
         self.load_network(self.netG_B, 'G_B', path)
         self.load_network(self.netD_B, 'D_B', path)
         self.load_network(self.net_action_G_B, 'G_act_B', path)
@@ -284,29 +288,28 @@ class CycleGANModel():
         self.load_network(self.net_action_D_A, 'D_act_A', path)
         self.load_network(self.net_action_D_B, 'D_act_B', path)
 
-
     def reset_buffer(self):
         self.gt_buffer = []
         self.pred_buffer = []
         self.gt_buffer1 = []
         self.pred_buffer1 = []
 
-    def show_points(self,gt_data,pred_data):
-        ncols = int(np.sqrt(gt_data.shape[1]))+1
-        nrows = int(np.sqrt(gt_data.shape[1]))+1
-        assert (ncols*nrows>=gt_data.shape[1])
+    def show_points(self, gt_data, pred_data):
+        ncols = int(np.sqrt(gt_data.shape[1])) + 1
+        nrows = int(np.sqrt(gt_data.shape[1])) + 1
+        assert (ncols * nrows >= gt_data.shape[1])
         _, axes = plt.subplots(ncols, nrows, figsize=(nrows * 3, ncols * 3))
         axes = axes.flatten()
 
         for ax_i, ax in enumerate(axes):
-            if ax_i>=gt_data.shape[1]:
+            if ax_i >= gt_data.shape[1]:
                 continue
             ax.scatter(gt_data[:, ax_i], pred_data[:, ax_i], s=3, label='xyz_{}'.format(ax_i))
 
-    def npdata(self,item):
+    def npdata(self, item):
         return item.cpu().data.numpy()
 
-    def visual(self,path):
+    def visual(self, path):
         gt_data = np.vstack(self.gt_buffer)
         pred_data = np.vstack(self.pred_buffer)
         # self.show_points(gt_data,pred_data)

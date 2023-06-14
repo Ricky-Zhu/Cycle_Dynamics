@@ -20,8 +20,8 @@ def safe_path(path):
 
 def init_logs(opt):
     log_dir = safe_path(os.path.join(opt.log_root, '{}_{}'.format(opt.env, opt.target_env),
-                                     'exp_{}_{}_{}_{}'.format(opt.data_type1, opt.data_id1, opt.data_type2,
-                                                              opt.data_id2)))
+                                     'exp_{}_{}'.format(opt.data_id1,
+                                                        opt.data_id2)))
     if opt.istrain:
         img_logs = safe_path(os.path.join(log_dir, 'train'))
         txt_logs = os.path.join(log_dir, 'train_log.txt')
