@@ -159,10 +159,9 @@ class CycleGANModel():
         # ***************************
         #       action part
         # ***************************
-        with torch.no_grad():
-            fake_target_t0 = self.netG_1to2(self.real_At0)
-            fake_target_t1 = self.netG_1to2(self.real_At1)
-            target_action = self.netI_2(fake_target_t0, fake_target_t1)
+        fake_target_t0 = self.netG_1to2(self.real_At0)
+        fake_target_t1 = self.netG_1to2(self.real_At1)
+        target_action = self.netI_2(fake_target_t0, fake_target_t1)
 
         pred_fake_target_action = self.net_action_G_1to2(self.real_At0, self.action_A)
         label = torch.zeros_like(pred_fake_target_action).float().cuda()
