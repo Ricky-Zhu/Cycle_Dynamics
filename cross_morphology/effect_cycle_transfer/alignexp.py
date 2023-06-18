@@ -36,13 +36,13 @@ def train(args):
     txt_logs, img_logs, weight_logs = init_logs(args)
     data_agent = CycleData(args)  # normalize and initial the pre-collected source and target domain data
     model = CycleGANModel(args)  # initialize all the needed networks
-    model.iengine.train_statef(data_agent.data2)  # train the target inverse dynamics
+    # model.iengine.train_statef(data_agent.data2)  # train the target inverse dynamics
 
     cprint('evaluate the initial transfered policy in the target domain', 'blue')
     model.cross_policy.eval_policy(
         gxmodel=model.netG_2to1,
         axmodel=model.net_action_G_1to2,
-        eval_episodes=1)
+        eval_episodes=10)
 
     best_reward = 0
 

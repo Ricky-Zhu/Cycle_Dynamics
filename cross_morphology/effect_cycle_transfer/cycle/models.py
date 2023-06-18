@@ -259,7 +259,7 @@ class Iengine:
             if epoch in [3, 7, 10, 15]:
                 lr *= 0.5
                 optimizer = torch.optim.Adam(self.imodel.parameters(), lr=lr)
-            epoch_loss, cmp_loss = 0, 0
+            epoch_loss = 0
             idx = list(range(now.shape[0]))
             random.shuffle(idx)
             now = now[idx]

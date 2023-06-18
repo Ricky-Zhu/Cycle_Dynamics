@@ -129,10 +129,8 @@ class CycleGANModel():
     def backward_G(self):
         lambda_G_B0 = self.opt.lambda_G0
         lambda_G_A0 = self.opt.lambda_G0
-        lambda_G_B1 = self.opt.lambda_G1
-        lambda_G_action_A = self.opt.lambda_GactA
-        lambda_G_action_B = self.opt.lambda_GactB
-        lambda_cycle_action = self.opt.lambda_Gcyc
+        # lambda_G_cycle = self.opt.lambda_G_cyc
+        # lambda_cycle_action = self.opt.lambda_action_cyc
         lambda_F = self.opt.lambda_F
 
         # ***************************
