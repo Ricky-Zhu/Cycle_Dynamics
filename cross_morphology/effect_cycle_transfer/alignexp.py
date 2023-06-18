@@ -1,5 +1,5 @@
 import os
-
+import git
 import gym
 import torch
 import random
@@ -12,6 +12,7 @@ from cycle.data import CycleData
 from cycle.dyncycle import CycleGANModel
 from cycle.utils import init_logs
 from termcolor import cprint
+import json
 
 
 def setup_seed(seed):
@@ -33,10 +34,16 @@ def add_errors(model, display):
 
 
 def train(args):
-    txt_logs, img_logs, weight_logs = init_logs(args)
+    txt_logs, txt_eval_logs, training_args_logs, img_logs, weight_logs = init_logs(args)
     data_agent = CycleData(args)  # normalize and initial the pre-collected source and target domain data
     model = CycleGANModel(args)  # initialize all the needed networks
-    # model.iengine.train_statef(data_agent.data2)  # train the target inverse dynamics
+    model.iengine.train_statef(data_agent.data2)  # train the target inverse dynamics
+
+    # log the hyper-parameters and the git commit id
+    json.dump(vars(args), training_args_logs, indent=4)
+    repo = git.Repo(search_parent_directories=True)
+    sha = repo.head.object.hexsha
+    json.dump(str('commit id: {}'.format(sha)), training_args_logs)
 
     cprint('evaluate the initial transfered policy in the target domain', 'blue')
     model.cross_policy.eval_policy(
@@ -64,7 +71,7 @@ def train(args):
             # real, fake = model.fetch()
 
             if (batch_id + 1) % args.display_gap == 0:
-                display = '\n===> Batch[{}/{}]'.format(batch_id + 1, args.pair_n)
+                display = '\n===> iteration {} \t Batch[{}/{}]'.format(iteration, batch_id + 1, args.pair_n)
                 print(display)
                 display = add_errors(model, display)
                 txt_logs.write('{}\n'.format(display))
@@ -81,7 +88,11 @@ def train(args):
                 if reward > best_reward:
                     best_reward = reward
                     model.save(weight_logs)
-                print('best_reward:{:.1f}  cur_reward:{:.1f}'.format(best_reward, reward))
+                eval_display = '\niteration {} best_reward:{:.1f}  cur_reward:{:.1f}'.format(iteration, best_reward,
+                                                                                             reward)
+                print(eval_display)
+                txt_eval_logs.write('{}\n'.format(eval_display))
+                txt_eval_logs.flush()
 
         args.init_start = False
         args.lr_Gx = 0
@@ -117,7 +128,11 @@ def train(args):
                     best_reward = reward
                     model.save(weight_logs)
 
-                print('best_reward:{:.1f}  cur_reward:{:.1f}'.format(best_reward, reward))
+                eval_display = '\niteration {} best_reward:{:.1f}  cur_reward:{:.1f}'.format(iteration, best_reward,
+                                                                                             reward)
+                print(eval_display)
+                txt_eval_logs.write('{}\n'.format(eval_display))
+                txt_eval_logs.flush()
 
 
 # def test(args):

@@ -10,6 +10,7 @@ import random
 import torch
 import torch.nn as nn
 from torch.autograd import Variable
+from datetime import datetime
 
 
 def safe_path(path):
@@ -19,19 +20,27 @@ def safe_path(path):
 
 
 def init_logs(opt):
+    current_time = datetime.today().strftime('%Y-%m-%d-%H-%M-%S')
     log_dir = safe_path(os.path.join(opt.log_root, '{}_{}'.format(opt.env, opt.target_env),
-                                     'exp_{}_{}'.format(opt.data_id1,
-                                                        opt.data_id2)))
+                                     'exp_{}'.format(current_time)))
+    txt_eval_logs = None
+    training_args_logs = None
     if opt.istrain:
         img_logs = safe_path(os.path.join(log_dir, 'train'))
         txt_logs = os.path.join(log_dir, 'train_log.txt')
         txt_logs = open(txt_logs, 'w')
+
+        txt_eval_logs = os.path.join(log_dir, 'train_eval_log.txt')
+        txt_eval_logs = open(txt_eval_logs, 'w')
+
+        training_args_logs = os.path.join(log_dir, 'training_args_logs.json')
+        training_args_logs = open(training_args_logs, 'w')
     else:
         img_logs = safe_path(os.path.join(log_dir, 'eval'))
         txt_logs = os.path.join(log_dir, 'eval_log.txt')
         txt_logs = open(txt_logs, 'w')
     weight_logs = safe_path(os.path.join(log_dir, 'weights'))
-    return txt_logs, img_logs, weight_logs
+    return txt_logs, txt_eval_logs, training_args_logs, img_logs, weight_logs
 
 
 class ImagePool():

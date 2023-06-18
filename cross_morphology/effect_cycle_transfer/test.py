@@ -1,2 +1,4 @@
-import gym
-env = gym.make('HalfCheetah-v2')
+import git
+repo = git.Repo(search_parent_directories=True)
+sha = repo.head.object.hexsha
+print(sha)
