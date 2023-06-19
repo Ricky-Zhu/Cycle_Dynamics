@@ -40,7 +40,7 @@ def init_logs(opt):
         txt_logs = os.path.join(log_dir, 'eval_log.txt')
         txt_logs = open(txt_logs, 'w')
     weight_logs = safe_path(os.path.join(log_dir, 'weights'))
-    return txt_logs, txt_eval_logs, training_args_logs, img_logs, weight_logs
+    return txt_logs, txt_eval_logs, training_args_logs, img_logs, weight_logs, log_dir
 
 
 class ImagePool():

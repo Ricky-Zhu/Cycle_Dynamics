@@ -5,8 +5,7 @@ import torch
 import random
 import numpy as np
 from tqdm import tqdm
-import matplotlib.pyplot as plt
-
+import pickle
 from options import get_options
 from cycle.data import CycleData
 from cycle.dyncycle import CycleGANModel
@@ -34,7 +33,7 @@ def add_errors(model, display):
 
 
 def train(args):
-    txt_logs, txt_eval_logs, training_args_logs, img_logs, weight_logs = init_logs(args)
+    txt_logs, txt_eval_logs, training_args_logs, img_logs, weight_logs, log_dirs = init_logs(args)
     data_agent = CycleData(args)  # normalize and initial the pre-collected source and target domain data
     model = CycleGANModel(args)  # initialize all the needed networks
     model.iengine.train_statef(data_agent.data2)  # train the target inverse dynamics
@@ -88,6 +87,15 @@ def train(args):
                 if reward > best_reward:
                     best_reward = reward
                     model.save(weight_logs)
+                    # save the x y pos
+                    _, xy_pos = model.cross_policy.eval_policy(
+                        gxmodel=model.netG_2to1,
+                        axmodel=model.net_action_G_1to2,
+                        eval_episodes=1,
+                        return_xy_pos=True)
+                    f = open(log_dirs + '/xy_pos_best.txt', 'wb')
+                    pickle.dump(xy_pos, f)
+                    f.close()
                 eval_display = '\niteration {} best_reward:{:.1f}  cur_reward:{:.1f}'.format(iteration, best_reward,
                                                                                              reward)
                 print(eval_display)
@@ -127,12 +135,29 @@ def train(args):
                 if reward > best_reward:
                     best_reward = reward
                     model.save(weight_logs)
+                    _, xy_pos = model.cross_policy.eval_policy(
+                        gxmodel=model.netG_2to1,
+                        axmodel=model.net_action_G_1to2,
+                        eval_episodes=1,
+                        return_xy_pos=True)
+                    f = open(log_dirs + '/xy_pos_best.txt', 'wb')
+                    pickle.dump(xy_pos, f)
+                    f.close()
 
                 eval_display = '\niteration {} best_reward:{:.1f}  cur_reward:{:.1f}'.format(iteration, best_reward,
                                                                                              reward)
                 print(eval_display)
                 txt_eval_logs.write('{}\n'.format(eval_display))
                 txt_eval_logs.flush()
+
+    _, xy_pos = model.cross_policy.eval_policy(
+        gxmodel=model.netG_2to1,
+        axmodel=model.net_action_G_1to2,
+        eval_episodes=1,
+        return_xy_pos=True)
+    f = open(log_dirs + '/xy_pos_final.txt', 'wb')
+    pickle.dump(xy_pos, f)
+    f.close()
 
 
 # def test(args):

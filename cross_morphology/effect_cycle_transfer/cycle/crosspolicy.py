@@ -94,7 +94,11 @@ class CrossPolicy:
                     gxmodel=None,
                     axmodel=None,
                     imgpath=None,
-                    eval_episodes=10):
+                    eval_episodes=10,
+                    return_xy_pos=False):
+        x_pos = []
+        y_pos = []
+
         eval_env = self.env
         state_buffer = []
         action_buffer = []
@@ -107,6 +111,9 @@ class CrossPolicy:
 
         for i in tqdm(range(eval_episodes)):
             state, done = eval_env.reset(), False
+            if return_xy_pos:
+                x_pos.append(eval_env.sim.data.qpos[0])
+                y_pos.append(eval_env.sim.data.qpos[1])
             if save_flag:
                 episode_path = os.path.join(imgpath, 'episode_{}'.format(i))
                 if not os.path.exists(episode_path):
@@ -121,6 +128,9 @@ class CrossPolicy:
                 state, reward, done, info = eval_env.step(action)
 
                 avg_reward += reward
+                if return_xy_pos:
+                    x_pos.append(eval_env.sim.data.qpos[0])
+                    y_pos.append(eval_env.sim.data.qpos[1])
                 # if self.env_name=='HalfCheetah-v2':
                 #     avg_reward += info['reward_run']
                 # elif self.env_name=='Swimmer-v2':
@@ -137,5 +147,7 @@ class CrossPolicy:
         print("-----------------------------------------------")
         print(f"Evaluation over {eval_episodes} episodes: {avg_reward:.3f}")
         print("-----------------------------------------------")
-
-        return avg_reward
+        if return_xy_pos:
+            return avg_reward, (x_pos, y_pos)
+        else:
+            return avg_reward
