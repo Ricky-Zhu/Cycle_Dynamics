@@ -5,6 +5,7 @@ import torch
 import torch.nn as nn
 from torch.nn import functional as F
 import os
+import pickle
 
 
 class Actor(nn.Module):
@@ -68,7 +69,7 @@ def get_xy_pos(path, env):
             break
         s = s_
     print(rew)
-    y_pos = smooth(y_pos, 500)
+    # y_pos = smooth(y_pos, 500)
     plt.ylim(-1., 1.)
     plt.plot(x_pos, y_pos)
 
@@ -77,6 +78,18 @@ def get_xy_pos(path, env):
     return x_pos, y_pos
 
 
-path = '/home/ruiqi/projects/Cycle_Dynamics/logs/cross_morphology_effect/HalfCheetah-v2_base/models/TD3_HalfCheetah-v2_0_actor'
-env = gym.make('HalfCheetah-v2')
-get_xy_pos(path, env)
+def visual_xy(path):
+    best_xy = pickle.load(open(path + '/xy_pos_best.txt', 'rb'))
+    final_xy = pickle.load(open(path + '/xy_pos_final.txt', 'rb'))
+    plt.ylim(-1., 1.)
+    plt.plot(best_xy[0], best_xy[1], 'r')
+    plt.plot(final_xy[0], final_xy[1], 'g')
+    plt.show()
+
+
+if __name__ == "__main__":
+    # path = '/home/ruiqi/projects/Cycle_Dynamics/logs/cross_morphology_effect/HalfCheetah-v2_base/models/TD3_HalfCheetah-v2_0_actor'
+    # env = gym.make('HalfCheetah-v2')
+    # get_xy_pos(path, env)
+    path = '/home/ruiqi/projects/Cycle_Dynamics/logs/cross_morphology_effect/HalfCheetah-v2_HalfCheetah_3leg-v2/exp_2023-06-19-18-29-16'
+    visual_xy(path)

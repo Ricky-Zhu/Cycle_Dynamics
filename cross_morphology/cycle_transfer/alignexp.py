@@ -48,7 +48,7 @@ def train(args):
 
     best_reward = 0
 
-    for iteration in range(3):
+    for iteration in range(5):
         cprint('###### iteration {} #######'.format(iteration + 1), 'red', 'on_blue')
 
         args.lr_Gx = 1e-4

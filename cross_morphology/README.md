@@ -15,5 +15,11 @@ python train.py
 ## train the correspondence
 ```shell
 cd cycle_transfer
-python alignexp.py
+python alignexp.py --env HalfCheetah-v2 --target_env HalfCheetah_3leg-v2 \
+--pair_n 7000 --display_gap 1000 --eval_gap 1000
+```
+
+for swimmer experiments
+```shell
+python alignexp.py --env Swimmer-v2 --target_env Swimmer_4part-v2 --pair_n 7000 --display_gap 1000 --eval_gap 1000
 ```
