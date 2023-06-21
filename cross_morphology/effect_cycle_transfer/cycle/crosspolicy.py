@@ -55,7 +55,7 @@ class TD3(object):
         state = self.mean1.clone()
         state[:self.opt.state_dim1] = tmp
 
-        state_temp = state.clone()
+        state_temp = state.clone().detach()
         state = state * self.std1 + self.mean1
         state = state.cpu().data.numpy()
         action = self.select_action(state)
