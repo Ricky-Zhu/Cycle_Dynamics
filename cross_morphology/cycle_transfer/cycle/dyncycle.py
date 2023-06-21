@@ -8,7 +8,7 @@ from torchvision import transforms
 import matplotlib.pyplot as plt
 import itertools
 
-from .models import S2S, SDmodel, AGmodel, ADmodel, Fengine
+from .models import S2S, SDmodel, AGmodel, ADmodel, Fengine, Iengine, EffectAGModel
 from .utils import ImagePool, GANLoss
 from .crosspolicy import CrossPolicy
 
@@ -24,14 +24,20 @@ class CycleGANModel():
         # load the pre-trained policy in the source domain, while the eval env is the target env
         self.cross_policy = CrossPolicy(opt)
         # state mapping: target -> source
-        self.netG_B = S2S(opt).cuda()
+        self.netG_B = S2S(opt, dir='2to1').cuda()
+        # state mapping: source -> target
+        self.netG_A = S2S(opt, dir='1to2').cuda()
         # action mapping: source -> target
         self.net_action_G_A = AGmodel(opt, '1to2').cuda()
         # action mapping: target -> source
         self.net_action_G_B = AGmodel(opt, '2to1').cuda()
         # source forward dynamics model
         self.fengine = Fengine(opt)
+        # target inverse dynamics model
+        self.invengine = Iengine(opt)
+        self.effect_action_G = EffectAGModel(opt, '1to2').cuda()
         self.netF_A = self.fengine.fmodel.cuda()
+        self.net_Inv_B = self.invengine.imodel.cuda()
 
         # action discriminator target
         self.net_action_D_A = ADmodel(opt, '1to2').cuda()
@@ -40,7 +46,9 @@ class CycleGANModel():
 
         self.reset_buffer()
         # source state discriminator
-        self.netD_B = SDmodel(opt).cuda()
+        self.netD_B = SDmodel(opt, dir='2to1').cuda()
+        # target state discriminator
+        self.netD_A = SDmodel(opt, dir='1to2').cuda()
 
         self.fake_A_pool = ImagePool(pool_size=128)
         self.fake_B_pool = ImagePool(pool_size=128)
@@ -56,10 +64,14 @@ class CycleGANModel():
             self.criterionIdt = torch.nn.MSELoss()
         # initialize optimizers
         self.optimizer_G = torch.optim.Adam([{'params': self.netF_A.parameters(), 'lr': 0.0},
+                                             {'params': self.net_Inv_B.parameters(), 'lr': 0.0},
                                              {'params': self.net_action_G_A.parameters(), 'lr': opt.lr_Ax},
                                              {'params': self.net_action_G_B.parameters(), 'lr': opt.lr_Ax},
-                                             {'params': self.netG_B.parameters(), 'lr': opt.lr_Gx}])
+                                             {'params': self.netG_B.parameters(), 'lr': opt.lr_Gx},
+                                             {'params': self.netG_A.parameters(), 'lr': opt.lr_Gx},
+                                             {'params': self.effect_action_G.parameters(), 'lr': opt.lr_Ax}])
         self.optimizer_D_B = torch.optim.Adam(self.netD_B.parameters())
+        self.optimizer_D_A = torch.optim.Adam(self.netD_A.parameters())
         self.optimizer_D_action_B = torch.optim.Adam(self.net_action_D_B.parameters())
         self.optimizer_D_action_A = torch.optim.Adam(self.net_action_D_A.parameters())
         self.init_start = True
@@ -73,9 +85,11 @@ class CycleGANModel():
         self.net_action_G_A.init_start = opt.init_start
         self.net_action_G_B.init_start = opt.init_start
         self.optimizer_G = torch.optim.Adam([{'params': self.netF_A.parameters(), 'lr': 0.0},
+                                             {'params': self.net_Inv_B.parameters(), 'lr': 0.0},
                                              {'params': self.net_action_G_A.parameters(), 'lr': opt.lr_Ax},
                                              {'params': self.net_action_G_B.parameters(), 'lr': opt.lr_Ax},
-                                             {'params': self.netG_B.parameters(), 'lr': opt.lr_Gx}])
+                                             {'params': self.netG_B.parameters(), 'lr': opt.lr_Gx},
+                                             {'params': self.netG_A.parameters(), 'lr': opt.lr_Gx}])
         print('\n-----------------------------------------------')
         print('------------ model phase updated! -------------')
         print('-----------------------------------------------\n')

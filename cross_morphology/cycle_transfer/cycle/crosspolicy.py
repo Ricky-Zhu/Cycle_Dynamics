@@ -45,7 +45,7 @@ class TD3(object):
         action = self.actor(state).cpu().data.numpy().flatten()
         return action
 
-    def select_cross_action(self, state, gxmodel, axmodel):
+    def select_cross_action(self, state, gxmodel, axmodel): #TODO
         state = torch.tensor(state).float().cuda()
         state = (state - self.mean2) / self.std2
 

@@ -55,10 +55,11 @@ class TD3(object):
         state = self.mean1.clone()
         state[:self.opt.state_dim1] = tmp
 
+        state_temp = state.clone()
         state = state * self.std1 + self.mean1
         state = state.cpu().data.numpy()
         action = self.select_action(state)
-        action = axmodel(torch.tensor(state).float().cuda(),
+        action = axmodel(torch.tensor(state_temp).float().cuda(),
                          torch.tensor(action).float().cuda().unsqueeze(0))
         action = action.cpu().data.numpy()
         return action

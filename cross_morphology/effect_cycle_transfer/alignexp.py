@@ -36,7 +36,7 @@ def train(args):
     txt_logs, txt_eval_logs, training_args_logs, img_logs, weight_logs, log_dirs = init_logs(args)
     data_agent = CycleData(args)  # normalize and initial the pre-collected source and target domain data
     model = CycleGANModel(args)  # initialize all the needed networks
-    model.iengine.train_statef(data_agent.data2)  # train the target inverse dynamics
+    # model.iengine.train_statef(data_agent.data2)  # train the target inverse dynamics
 
     # log the hyper-parameters and the git commit id
     json.dump(vars(args), training_args_logs, indent=4)
