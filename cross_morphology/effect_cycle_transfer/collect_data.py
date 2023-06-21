@@ -183,6 +183,6 @@ if __name__ == '__main__':
 
     opt = parser.parse_args()
 
-    path = '/home/ruiqi/projects/Cycle_Dynamics/logs/cross_morphology_effect/HalfCheetah-v2_base/models/TD3_HalfCheetah-v2_0_actor'
+    path = '../../logs/cross_morphology_effect/HalfCheetah-v2_base/models/TD3_HalfCheetah-v2_0_actor'
     suffix = 'expert_data'
     dataset = CycleData(opt,path,suffix)
