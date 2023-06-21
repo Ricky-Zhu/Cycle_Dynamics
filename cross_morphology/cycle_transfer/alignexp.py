@@ -44,7 +44,7 @@ def train(args):
     cprint('evaluate the initial transfered policy in the target domain', 'blue')
     model.cross_policy.eval_policy(
         gxmodel=model.netG_B,
-        axmodel=model.net_action_G_A,
+        axmodel=model.effect_action_G,
         eval_episodes=10)
 
     best_reward = 0
