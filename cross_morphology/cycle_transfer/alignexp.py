@@ -79,7 +79,7 @@ def train(args):
             if (batch_id + 1) % args.eval_gap == 0:
                 reward = model.cross_policy.eval_policy(
                     gxmodel=model.netG_B,
-                    axmodel=model.net_action_G_A,
+                    axmodel=model.effect_action_G,
                     eval_episodes=args.eval_n)
                 if reward > best_reward:
                     best_reward = reward
@@ -114,7 +114,7 @@ def train(args):
             if (batch_id + 1) % args.eval_gap == 0:
                 reward = model.cross_policy.eval_policy(
                     gxmodel=model.netG_B,
-                    axmodel=model.net_action_G_A,
+                    axmodel=model.effect_action_G,
                     eval_episodes=args.eval_n)
                 if reward > best_reward:
                     best_reward = reward
