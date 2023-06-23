@@ -246,8 +246,9 @@ class Iengine:
         self.env_logs = os.path.join(self.opt.log_root, 'data/{}_data'.format(self.opt.target_env))
         self.data_root2 = os.path.join(self.env_logs, '{}'.format(self.opt.data_id2))
         weight_path = os.path.join(self.data_root2, 'inverse.pth')
-        if self.opt.pretrain_f:
+        if self.opt.pretrain_i:
             self.imodel.load_state_dict(torch.load(weight_path))
+            print('load the pretrained inverse dynamics model in the target domain')
             return None
         lr = 1e-3
         optimizer = torch.optim.Adam(self.imodel.parameters(), lr=lr)

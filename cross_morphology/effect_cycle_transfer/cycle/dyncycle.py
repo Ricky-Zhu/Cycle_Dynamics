@@ -118,12 +118,12 @@ class CycleGANModel():
 
     def backward_D_A(self):
         fake_A = self.fake_A_pool.query(self.fake_At0)
-        loss_D_1 = self.backward_D_basic(self.netD_1, self.real_At0, fake_A)
+        loss_D_1 = self.backward_D_basic(self.netD_1, self.real_At0, fake_A) * self.opt.lambda_D
         self.loss_D_1 = loss_D_1.item()
 
     def backward_D_B(self):
         fake_B = self.fake_B_pool.query(self.fake_Bt0)
-        loss_D_2 = self.backward_D_basic(self.netD_2, self.real_Bt0, fake_B)
+        loss_D_2 = self.backward_D_basic(self.netD_2, self.real_Bt0, fake_B) * self.opt.lambda_D
         self.loss_D_2 = loss_D_2.item()
 
     def backward_G(self):

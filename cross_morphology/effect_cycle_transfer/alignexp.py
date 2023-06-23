@@ -96,7 +96,7 @@ def train(args):
                     f = open(log_dirs + '/xy_pos_best.txt', 'wb')
                     pickle.dump(xy_pos, f)
                     f.close()
-                eval_display = '\niteration {} best_reward:{:.1f}  cur_reward:{:.1f}'.format(iteration, best_reward,
+                eval_display = '\n G part iteration {} best_reward:{:.1f}  cur_reward:{:.1f}'.format(iteration, best_reward,
                                                                                              reward)
                 print(eval_display)
                 txt_eval_logs.write('{}\n'.format(eval_display))
@@ -144,7 +144,7 @@ def train(args):
                     pickle.dump(xy_pos, f)
                     f.close()
 
-                eval_display = '\niteration {} best_reward:{:.1f}  cur_reward:{:.1f}'.format(iteration, best_reward,
+                eval_display = '\nA part iteration {} best_reward:{:.1f}  cur_reward:{:.1f}'.format(iteration, best_reward,
                                                                                              reward)
                 print(eval_display)
                 txt_eval_logs.write('{}\n'.format(eval_display))
