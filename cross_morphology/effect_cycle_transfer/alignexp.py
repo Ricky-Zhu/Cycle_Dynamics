@@ -1,5 +1,4 @@
 import os
-import git
 import gym
 import torch
 import random
@@ -11,7 +10,9 @@ from cycle.data import CycleData
 from cycle.dyncycle import CycleGANModel
 from cycle.utils import init_logs
 from termcolor import cprint
-import json
+import wandb
+from datetime import datetime
+from trans_xy_err import error_rec
 
 
 def setup_seed(seed):
@@ -20,6 +21,16 @@ def setup_seed(seed):
     np.random.seed(seed)
     random.seed(seed)
     torch.backends.cudnn.deterministic = True
+
+
+def setup_wandb(args):
+    current_date = datetime.today().strftime('%Y-%m-%d-%H-%M-%S')
+    wandb.login()
+    wandb.init(
+        project="cdat_{}_{}".format(args.env, args.target_env),
+        config=vars(args),
+        name="cdat_{}".format(current_date)
+    )
 
 
 setup_seed(0)
@@ -38,11 +49,9 @@ def train(args):
     model = CycleGANModel(args)  # initialize all the needed networks
     model.iengine.train_statef(data_agent.data2)  # train the target inverse dynamics
 
-    # log the hyper-parameters and the git commit id
-    json.dump(vars(args), training_args_logs, indent=4)
-    repo = git.Repo(search_parent_directories=True)
-    sha = repo.head.object.hexsha
-    json.dump(str('commit id: {}'.format(sha)), training_args_logs)
+    xy_err_rec = error_rec(x_arg=0, y_arg=1)
+    if not args.debug:
+        setup_wandb(args)
 
     cprint('evaluate the initial transfered policy in the target domain', 'blue')
     model.cross_policy.eval_policy(
@@ -53,7 +62,7 @@ def train(args):
     best_reward = 0
 
     for iteration in range(3):
-        cprint('###### iteration {} #######'.format(iteration + 1), 'red', 'on_blue')
+        cprint('###### iteration {} #######'.format(iteration), 'red', 'on_blue')
 
         args.lr_Gx = 1e-4
         args.lr_Ax = 0
@@ -72,18 +81,27 @@ def train(args):
             if (batch_id + 1) % args.display_gap == 0:
                 display = '\n===> iteration {} \t Batch[{}/{}]'.format(iteration, batch_id + 1, args.pair_n)
                 print(display)
-                display = add_errors(model, display)
-                txt_logs.write('{}\n'.format(display))
-                txt_logs.flush()
+                # wandb log the loss
+                new_loss_dict = {}
+                errs = model.get_current_errors()
+                for k, v in errs.items():
+                    k_ = 'iter_{}/g/{}'.format(iteration, k)
+                    new_loss_dict[k_] = v
+                if not args.debug:
+                    wandb.log(new_loss_dict)
 
-                path = os.path.join(img_logs, 'imgA_{}.jpg'.format(batch_id + 1))
-                model.visual(path)
+                model.visual()
 
             if (batch_id + 1) % args.eval_gap == 0:
                 reward = model.cross_policy.eval_policy(
                     gxmodel=model.netG_2to1,
                     axmodel=model.net_action_G_1to2,
-                    eval_episodes=args.eval_n)
+                    eval_episodes=args.eval_n,
+                    err_rec=xy_err_rec)
+
+                print('err mean:{} err var:{} err max:{}'.format(xy_err_rec.err_mean, xy_err_rec.err_var,
+                                                                 xy_err_rec.err_max))
+
                 if reward > best_reward:
                     best_reward = reward
                     model.save(weight_logs)
@@ -96,11 +114,17 @@ def train(args):
                     f = open(log_dirs + '/xy_pos_best.txt', 'wb')
                     pickle.dump(xy_pos, f)
                     f.close()
-                eval_display = '\n G part iteration {} best_reward:{:.1f}  cur_reward:{:.1f}'.format(iteration, best_reward,
-                                                                                             reward)
+                if not args.debug:
+                    wandb.log({'iter_{}/g/eval'.format(iteration): reward})
+                    wandb.log({'iter_{}_g_err_mean'.format(iteration): xy_err_rec.err_mean,
+                               'iter_{}_g_err_var'.format(iteration): xy_err_rec.err_var,
+                               'iter_{}_g_err_max'.format(iteration): xy_err_rec.err_max}
+                              )
+                xy_err_rec.reset()
+                eval_display = '\n G part iteration {} best_reward:{:.1f}  cur_reward:{:.1f}'.format(iteration,
+                                                                                                     best_reward,
+                                                                                                     reward)
                 print(eval_display)
-                txt_eval_logs.write('{}\n'.format(eval_display))
-                txt_eval_logs.flush()
 
         args.init_start = False
         args.lr_Gx = 0
@@ -120,18 +144,23 @@ def train(args):
             if (batch_id + 1) % args.display_gap == 0:
                 display = '\n===> Batch[{}/{}]'.format(batch_id + 1, args.pair_n)
                 print(display)
-                display = add_errors(model, display)
-                txt_logs.write('{}\n'.format(display))
-                txt_logs.flush()
+                # wandb log the loss
+                new_loss_dict = {}
+                errs = model.get_current_errors()
+                for k, v in errs.items():
+                    k_ = 'iter_{}/a/{}'.format(iteration, k)
+                    new_loss_dict[k_] = v
+                if not args.debug:
+                    wandb.log(new_loss_dict)
 
-                path = os.path.join(img_logs, 'imgA_{}.jpg'.format(batch_id + 1))
-                model.visual(path)
+                model.visual()
 
             if (batch_id + 1) % args.eval_gap == 0:
                 reward = model.cross_policy.eval_policy(
                     gxmodel=model.netG_2to1,
                     axmodel=model.net_action_G_1to2,
-                    eval_episodes=args.eval_n)
+                    eval_episodes=args.eval_n,
+                    err_rec=xy_err_rec)
                 if reward > best_reward:
                     best_reward = reward
                     model.save(weight_logs)
@@ -139,16 +168,26 @@ def train(args):
                         gxmodel=model.netG_2to1,
                         axmodel=model.net_action_G_1to2,
                         eval_episodes=1,
-                        return_xy_pos=True)
+                        return_xy_pos=True,
+                    )
                     f = open(log_dirs + '/xy_pos_best.txt', 'wb')
                     pickle.dump(xy_pos, f)
                     f.close()
 
-                eval_display = '\nA part iteration {} best_reward:{:.1f}  cur_reward:{:.1f}'.format(iteration, best_reward,
-                                                                                             reward)
+                print('err mean:{} err var:{} err max:{}'.format(xy_err_rec.err_mean, xy_err_rec.err_var,
+                                                                 xy_err_rec.err_max))
+
+                if not args.debug:
+                    wandb.log({'iter_{}/a/eval'.format(iteration): reward})
+                    wandb.log({'iter_{}_a_err_mean'.format(iteration): xy_err_rec.err_mean,
+                               'iter_{}_a_err_var'.format(iteration): xy_err_rec.err_var,
+                               'iter_{}_a_err_max'.format(iteration): xy_err_rec.err_max}
+                              )
+                xy_err_rec.reset()
+                eval_display = '\nA part iteration {} best_reward:{:.1f}  cur_reward:{:.1f}'.format(iteration,
+                                                                                                    best_reward,
+                                                                                                    reward)
                 print(eval_display)
-                txt_eval_logs.write('{}\n'.format(eval_display))
-                txt_eval_logs.flush()
 
     _, xy_pos = model.cross_policy.eval_policy(
         gxmodel=model.netG_2to1,

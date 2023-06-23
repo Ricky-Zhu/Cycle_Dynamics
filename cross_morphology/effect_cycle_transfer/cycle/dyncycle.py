@@ -257,7 +257,6 @@ class CycleGANModel():
         self.save_network(self.netD_1, 'D_A', path)
         self.save_network(self.netD_2, 'D_B', path)
 
-
     def load_network(self, network, network_label, path):
         weight_filename = 'model_{}.pth'.format(network_label)
         weight_path = os.path.join(path, weight_filename)
@@ -292,9 +291,9 @@ class CycleGANModel():
     def npdata(self, item):
         return item.cpu().data.numpy()
 
-    def visual(self, path):
-        gt_data = np.vstack(self.gt_buffer)
-        pred_data = np.vstack(self.pred_buffer)
+    def visual(self, path=None):
+        # gt_data = np.vstack(self.gt_buffer)
+        # pred_data = np.vstack(self.pred_buffer)
         # self.show_points(gt_data,pred_data)
         # plt.savefig(path)
         # plt.cla()

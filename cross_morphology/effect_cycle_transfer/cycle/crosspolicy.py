@@ -46,7 +46,7 @@ class TD3(object):
         action = self.actor(state).cpu().data.numpy().flatten()
         return action
 
-    def select_cross_action(self, state, gxmodel, axmodel):
+    def select_cross_action(self, state, gxmodel, axmodel, return_tran_state=False):
         state = torch.tensor(state).float().cuda()
         state = (state - self.mean2) / self.std2
 
@@ -62,6 +62,8 @@ class TD3(object):
         action = axmodel(torch.tensor(state_temp).float().cuda(),
                          torch.tensor(action).float().cuda().unsqueeze(0))
         action = action.cpu().data.numpy()
+        if return_tran_state:
+            return state, action
         return action
 
     def get_mean_std(self, prefix, data_id):
@@ -96,7 +98,8 @@ class CrossPolicy:
                     axmodel=None,
                     imgpath=None,
                     eval_episodes=10,
-                    return_xy_pos=False):
+                    return_xy_pos=False,
+                    err_rec=None):
         x_pos = []
         y_pos = []
 
@@ -122,8 +125,10 @@ class CrossPolicy:
             count = 0
             while not done:
                 state = np.array(state)
-                action = self.policy.select_cross_action(state, gxmodel, axmodel)
 
+                trans_state, action = self.policy.select_cross_action(state, gxmodel, axmodel, return_tran_state=True)
+                if err_rec is not None:
+                    err_rec(state, trans_state)
                 state_buffer.append(state)
                 action_buffer.append(action)
                 state, reward, done, info = eval_env.step(action)
