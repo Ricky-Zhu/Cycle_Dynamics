@@ -50,7 +50,7 @@ def train(args):
     model.iengine.train_statef(data_agent.data2)  # train the target inverse dynamics
 
     xy_err_rec = error_rec(x_arg=0, y_arg=1)
-    if not args.debug:
+    if args.start_train:
         setup_wandb(args)
 
     cprint('evaluate the initial transfered policy in the target domain', 'blue')
@@ -87,7 +87,7 @@ def train(args):
                 for k, v in errs.items():
                     k_ = 'iter_{}/g/{}'.format(iteration, k)
                     new_loss_dict[k_] = v
-                if not args.debug:
+                if args.start_train:
                     wandb.log(new_loss_dict)
 
                 model.visual()
@@ -114,11 +114,11 @@ def train(args):
                     f = open(log_dirs + '/xy_pos_best.txt', 'wb')
                     pickle.dump(xy_pos, f)
                     f.close()
-                if not args.debug:
+                if args.start_train:
                     wandb.log({'iter_{}/g/eval'.format(iteration): reward})
-                    wandb.log({'iter_{}_g_err_mean'.format(iteration): xy_err_rec.err_mean,
-                               'iter_{}_g_err_var'.format(iteration): xy_err_rec.err_var,
-                               'iter_{}_g_err_max'.format(iteration): xy_err_rec.err_max}
+                    wandb.log({'iter_{}/g/err_mean'.format(iteration): xy_err_rec.err_mean,
+                               'iter_{}/g/err_var'.format(iteration): xy_err_rec.err_var,
+                               'iter_{}/g/err_max'.format(iteration): xy_err_rec.err_max}
                               )
                 xy_err_rec.reset()
                 eval_display = '\n G part iteration {} best_reward:{:.1f}  cur_reward:{:.1f}'.format(iteration,
@@ -150,7 +150,7 @@ def train(args):
                 for k, v in errs.items():
                     k_ = 'iter_{}/a/{}'.format(iteration, k)
                     new_loss_dict[k_] = v
-                if not args.debug:
+                if args.start_train:
                     wandb.log(new_loss_dict)
 
                 model.visual()
@@ -177,11 +177,11 @@ def train(args):
                 print('err mean:{} err var:{} err max:{}'.format(xy_err_rec.err_mean, xy_err_rec.err_var,
                                                                  xy_err_rec.err_max))
 
-                if not args.debug:
+                if args.start_train:
                     wandb.log({'iter_{}/a/eval'.format(iteration): reward})
-                    wandb.log({'iter_{}_a_err_mean'.format(iteration): xy_err_rec.err_mean,
-                               'iter_{}_a_err_var'.format(iteration): xy_err_rec.err_var,
-                               'iter_{}_a_err_max'.format(iteration): xy_err_rec.err_max}
+                    wandb.log({'iter_{}/a/err_mean'.format(iteration): xy_err_rec.err_mean,
+                               'iter_{}/a/err_var'.format(iteration): xy_err_rec.err_var,
+                               'iter_{}/a/err_max'.format(iteration): xy_err_rec.err_max}
                               )
                 xy_err_rec.reset()
                 eval_display = '\nA part iteration {} best_reward:{:.1f}  cur_reward:{:.1f}'.format(iteration,
