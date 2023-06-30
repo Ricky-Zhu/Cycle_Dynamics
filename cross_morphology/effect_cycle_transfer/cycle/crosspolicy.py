@@ -150,9 +150,9 @@ class CrossPolicy:
                 count += 1
         avg_reward /= eval_episodes
 
-        print("-----------------------------------------------")
-        print(f"Evaluation over {eval_episodes} episodes: {avg_reward:.3f}")
-        print("-----------------------------------------------")
+        # print("-----------------------------------------------")
+        # print(f"Evaluation over {eval_episodes} episodes: {avg_reward:.3f}")
+        # print("-----------------------------------------------")
         if return_xy_pos:
             return avg_reward, (x_pos, y_pos)
         else:

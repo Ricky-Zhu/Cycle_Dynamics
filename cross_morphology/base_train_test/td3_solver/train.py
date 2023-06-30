@@ -6,6 +6,10 @@ import os
 from termcolor import cprint
 import utils
 import TD3
+import sys
+from os.path import dirname, abspath
+sys.path.append(dirname(dirname(dirname(dirname(abspath(__file__))))))
+from modified_envs import *
 
 
 def safe_path(path):
@@ -133,7 +137,7 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--policy", default="TD3")  # Policy name (TD3, DDPG or OurDDPG)
-    parser.add_argument("--env", default="HalfCheetah-v2")  # OpenAI gym environment name
+    parser.add_argument("--env", default="HalfCheetah_3leg-v2")  # OpenAI gym environment name
     parser.add_argument("--seed", default=0, type=int)  # Sets Gym, PyTorch and Numpy seeds
     parser.add_argument("--start_timesteps", default=25e3, type=int)  # Time steps initial random policy is used
     parser.add_argument("--eval_freq", default=1e4, type=int)  # How often (time steps) we evaluate
@@ -148,7 +152,7 @@ if __name__ == "__main__":
     parser.add_argument("--save_model", default=True)  # Save model and optimizer parameters
     parser.add_argument("--load_model", default="")  # Model load file name, "" doesn't load, "default" uses file_name
 
-    parser.add_argument("--log_root", default="../../../logs/cross_morphology")
+    parser.add_argument("--log_root", default="../../../logs/cross_morphology_effect")
     args = parser.parse_args()
 
     main(args)

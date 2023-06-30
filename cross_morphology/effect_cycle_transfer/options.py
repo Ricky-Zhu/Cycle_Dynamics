@@ -41,7 +41,7 @@ def get_options():
     parser.add_argument('--lambda_GactA', default=10., type=float)
     parser.add_argument('--lambda_GactB', default=10., type=float)
     parser.add_argument('--lambda_Gcyc', default=30., type=float)
-    parser.add_argument('--lambda_F', default=20., type=float)
+    parser.add_argument('--lambda_F', default=50., type=float)
     parser.add_argument('--init_start', default=True, type=bool)
 
     args = parser.parse_args()
