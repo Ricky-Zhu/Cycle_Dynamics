@@ -39,12 +39,11 @@ def train(args):
     data_agent = CycleData(args)  # normalize and initial the pre-collected source and target domain data
     model = CycleGANModel(args)  # initialize all the needed networks
     model.fengine.train_statef(data_agent.data1)  # train the source forward dynamics
-    model.invengine.train_statef(data_agent.data2)  # train the target inverse dynamics
 
     cprint('evaluate the initial transfered policy in the target domain', 'blue')
     model.cross_policy.eval_policy(
         gxmodel=model.netG_B,
-        axmodel=model.effect_action_G,
+        axmodel=model.net_action_G_A,
         eval_episodes=10)
 
     best_reward = 0
@@ -79,7 +78,7 @@ def train(args):
             if (batch_id + 1) % args.eval_gap == 0:
                 reward = model.cross_policy.eval_policy(
                     gxmodel=model.netG_B,
-                    axmodel=model.effect_action_G,
+                    axmodel=model.net_action_G_A,
                     eval_episodes=args.eval_n)
                 if reward > best_reward:
                     best_reward = reward
@@ -114,7 +113,7 @@ def train(args):
             if (batch_id + 1) % args.eval_gap == 0:
                 reward = model.cross_policy.eval_policy(
                     gxmodel=model.netG_B,
-                    axmodel=model.effect_action_G,
+                    axmodel=model.net_action_G_A,
                     eval_episodes=args.eval_n)
                 if reward > best_reward:
                     best_reward = reward

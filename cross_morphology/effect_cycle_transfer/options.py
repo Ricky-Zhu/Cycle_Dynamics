@@ -23,14 +23,14 @@ def get_options():
     parser.add_argument('--cut_state2', default=0, type=int)
 
     parser.add_argument('--episode_n', default=200, type=int)
-    parser.add_argument('--pair_n', default=100, type=int) # TODO change the parameter to 7000
-    parser.add_argument('--display_gap', default=1, type=int) # TODO change the parameter to 1000
-    parser.add_argument('--eval_gap', default=1, type=int) # TODO change the parameter to 1000
+    parser.add_argument('--pair_n', default=100, type=int)  # TODO change the parameter to 7000
+    parser.add_argument('--display_gap', default=1, type=int)  # TODO change the parameter to 1000
+    parser.add_argument('--eval_gap', default=1, type=int)  # TODO change the parameter to 1000
     parser.add_argument('--eval_n', default=5, type=int)
 
     parser.add_argument('--loss', default='l1', type=str)
     parser.add_argument('--istrain', default=True, type=bool)
-    parser.add_argument('--pretrain_i', default=False, type=bool)
+    parser.add_argument('--pretrain_i', default=True, type=bool)
     parser.add_argument('--start_train', action='store_true')
 
     parser.add_argument('--lr_Gx', default=1e-4, type=float)
@@ -43,6 +43,7 @@ def get_options():
     parser.add_argument('--lambda_Gcyc', default=30., type=float)
     parser.add_argument('--lambda_F', default=50., type=float)
     parser.add_argument('--init_start', default=True, type=bool)
+    parser.add_argument('--seed', default=10, type=int)
 
     args = parser.parse_args()
 

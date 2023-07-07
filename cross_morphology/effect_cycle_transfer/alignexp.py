@@ -9,6 +9,7 @@ from options import get_options
 from cycle.data import CycleData
 from cycle.dyncycle import CycleGANModel
 from cycle.utils import init_logs
+from termcolor import cprint
 import wandb
 from datetime import datetime
 from trans_xy_err import error_rec
@@ -65,7 +66,6 @@ def train(args):
 
         args.lr_Gx = 1e-4
         args.lr_Ax = 1e-4
-        args.init_start = False
         model.update(args)
         end_id = 0
         start_id = end_id
@@ -85,7 +85,7 @@ def train(args):
                 new_loss_dict = {}
                 errs = model.get_current_errors()
                 for k, v in errs.items():
-                    k_ = 'iter_{}/{}'.format(iteration, k)
+                    k_ = 'iter_{}/g/{}'.format(iteration, k)
                     new_loss_dict[k_] = v
                 if args.start_train:
                     wandb.log(new_loss_dict)
@@ -115,15 +115,78 @@ def train(args):
                     pickle.dump(xy_pos, f)
                     f.close()
                 if args.start_train:
-                    wandb.log({'iter_{}/eval'.format(iteration): reward})
-                    wandb.log({'iter_{}/err_mean'.format(iteration): xy_err_rec.err_mean,
-                               'iter_{}/err_var'.format(iteration): xy_err_rec.err_var,
-                               'iter_{}/err_max'.format(iteration): xy_err_rec.err_max}
+                    wandb.log({'iter_{}/g/eval'.format(iteration): reward})
+                    wandb.log({'iter_{}/g/err_mean'.format(iteration): xy_err_rec.err_mean,
+                               'iter_{}/g/err_var'.format(iteration): xy_err_rec.err_var,
+                               'iter_{}/g/err_max'.format(iteration): xy_err_rec.err_max}
                               )
                 xy_err_rec.reset()
-                eval_display = '\n iteration {} best_reward:{:.1f}  cur_reward:{:.1f}'.format(iteration,
-                                                                                              best_reward,
-                                                                                              reward)
+                eval_display = '\n G part iteration {} best_reward:{:.1f}  cur_reward:{:.1f}'.format(iteration,
+                                                                                                     best_reward,
+                                                                                                     reward)
+                print(eval_display)
+
+        args.init_start = False
+        args.lr_Gx = 1e-4
+        args.lr_Ax = 1e-4
+        model.update(args)
+        end_id = 0
+        start_id = end_id
+        end_id = start_id + args.pair_n
+        print('update A phase')
+        for batch_id in range(start_id, end_id):
+            item = data_agent.sample()
+            data1, data2 = item
+            model.set_input(item)
+            model.optimize_parameters()
+            # real, fake = model.fetch()
+
+            if (batch_id + 1) % args.display_gap == 0:
+                display = '\n===> Batch[{}/{}]'.format(batch_id + 1, args.pair_n)
+                print(display)
+                # wandb log the loss
+                new_loss_dict = {}
+                errs = model.get_current_errors()
+                for k, v in errs.items():
+                    k_ = 'iter_{}/a/{}'.format(iteration, k)
+                    new_loss_dict[k_] = v
+                if args.start_train:
+                    wandb.log(new_loss_dict)
+
+                model.visual()
+
+            if (batch_id + 1) % args.eval_gap == 0:
+                reward = model.cross_policy.eval_policy(
+                    gxmodel=model.netG_2to1,
+                    axmodel=model.net_action_G_1to2,
+                    eval_episodes=args.eval_n,
+                    err_rec=xy_err_rec)
+                if reward > best_reward:
+                    best_reward = reward
+                    model.save(weight_logs)
+                    _, xy_pos = model.cross_policy.eval_policy(
+                        gxmodel=model.netG_2to1,
+                        axmodel=model.net_action_G_1to2,
+                        eval_episodes=1,
+                        return_xy_pos=True,
+                    )
+                    f = open(log_dirs + '/xy_pos_best.txt', 'wb')
+                    pickle.dump(xy_pos, f)
+                    f.close()
+
+                print('err mean:{} err var:{} err max:{}'.format(xy_err_rec.err_mean, xy_err_rec.err_var,
+                                                                 xy_err_rec.err_max))
+
+                if args.start_train:
+                    wandb.log({'iter_{}/a/eval'.format(iteration): reward})
+                    wandb.log({'iter_{}/a/err_mean'.format(iteration): xy_err_rec.err_mean,
+                               'iter_{}/a/err_var'.format(iteration): xy_err_rec.err_var,
+                               'iter_{}/a/err_max'.format(iteration): xy_err_rec.err_max}
+                              )
+                xy_err_rec.reset()
+                eval_display = '\nA part iteration {} best_reward:{:.1f}  cur_reward:{:.1f}'.format(iteration,
+                                                                                                    best_reward,
+                                                                                                    reward)
                 print(eval_display)
 
     _, xy_pos = model.cross_policy.eval_policy(

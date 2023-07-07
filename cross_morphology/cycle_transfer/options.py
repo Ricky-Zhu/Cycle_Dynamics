@@ -30,10 +30,9 @@ def get_options():
 
     parser.add_argument('--loss', default='l1', type=str)
     parser.add_argument('--istrain', default=True, type=bool)
-    parser.add_argument('--pretrain_f', default=False, type=bool)
+    parser.add_argument('--pretrain_f', default=True, type=bool)
 
     parser.add_argument('--lr_Gx', default=1e-4, type=float)
-    parser.add_argument('--lr_effect_action', default=1e-4, type=float)
     parser.add_argument('--lr_Ax', default=0., type=float)
     parser.add_argument('--lambda_G0', default=10., type=float)
     parser.add_argument('--lambda_G1', default=10., type=float)
