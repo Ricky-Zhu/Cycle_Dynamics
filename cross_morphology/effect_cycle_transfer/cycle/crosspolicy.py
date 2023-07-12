@@ -61,6 +61,11 @@ class TD3(object):
         action = self.select_action(state)
         action = axmodel(torch.tensor(state_temp).float().cuda(),
                          torch.tensor(action).float().cuda().unsqueeze(0))
+        if self.opt.deterministic:
+            pass
+        else: # TODO whether need stochastic sample
+            action = action[0]
+
         action = action.cpu().data.numpy()
         if return_tran_state:
             return state, action

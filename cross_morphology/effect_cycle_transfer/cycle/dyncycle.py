@@ -66,6 +66,7 @@ class CycleGANModel():
         print('-----------------------------------------------')
 
     def update(self, opt):
+        self.opt = opt
         self.init_start = opt.init_start
         self.net_action_G_1to2.init_start = opt.init_start
         self.optimizer_G = torch.optim.Adam([{'params': self.netI_2.parameters(), 'lr': 0.0},
@@ -161,12 +162,15 @@ class CycleGANModel():
         # ***************************
         fake_target_t0 = self.netG_1to2(self.real_At0)
         fake_target_t1 = self.netG_1to2(self.real_At1)
+
         target_action = self.netI_2(fake_target_t0, fake_target_t1)
-
         pred_fake_target_action = self.net_action_G_1to2(self.real_At0, self.action_A)
-        label = torch.zeros_like(pred_fake_target_action).float().cuda()
-        loss_action = self.criterionCycle(target_action - pred_fake_target_action, label) * lambda_F
+        if self.opt.deterministic:
+            label = torch.zeros_like(pred_fake_target_action).float().cuda()
+            loss_action = self.criterionCycle(target_action - pred_fake_target_action, label) * lambda_F
 
+        else:
+            loss_action = self.compute_kl(pred_fake_target_action, target_action).mean() * lambda_F
         # # GAN loss D_B(G_B(B))
         # fake_At1 = self.netF_A(fake_At0, fake_action_A)
         # pred_fake = self.netD_B(fake_At1)
@@ -207,6 +211,14 @@ class CycleGANModel():
         self.gt1 = self.real_Bt1
         self.gt_buffer.append(self.gt0.cpu().data.numpy())
         self.pred_buffer.append(self.fake_At0.cpu().data.numpy())
+
+    @staticmethod
+    def compute_kl(source, target, epsilon=1e-6):
+        source_mean, source_std = source
+        target_mean, target_std = target
+        kl = torch.log(source_std / (target_std + epsilon)) + (target_std ** 2 + (target_mean - source_mean) ** 2) / (
+                2 * source_std ** 2) - 0.5
+        return kl
 
     def optimize_parameters(self):
         # forward

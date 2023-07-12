@@ -3,6 +3,7 @@ import torch
 import random
 import numpy as np
 from tqdm import tqdm
+from torch.distributions.normal import Normal
 import torch.nn as nn
 
 
@@ -71,25 +72,36 @@ class AGmodel(nn.Module):
             nn.ReLU(),
             nn.Linear(64, 128),
         )
+
+        self.output_dim = self.action_dim2 if self.opt.deterministic else self.action_dim2 * 2
         self.output = nn.Sequential(
             nn.Linear(256, 64),
             nn.ReLU(),
-            nn.Linear(64, self.action_dim2),
-            nn.Tanh()
+            nn.Linear(64, self.output_dim),
         )
         self.max_action = 1.0
+        self.log_std_min = -20.
+        self.log_std_max = 2.
 
     def forward(self, state, action):
         if self.init_start:
-            new_action = self.get_init_action(action)
+            output = self.get_init_action(action)
         else:
             if state.ndim == 1:
                 state = state[None, :]
             state_post = self.statefc(state)
             action_post = self.actionfc(action)
             state_action_post = torch.cat([state_post, action_post], dim=1)
-            new_action = self.output(state_action_post) * self.max_action
-        return new_action
+
+            prediction = self.output(state_action_post)
+            if self.opt.deterministic:
+                output = torch.tanh(prediction) * self.max_action
+            else:
+                mean, log_std = torch.chunk(prediction, 2, 1)
+                log_std = torch.clamp(log_std, self.log_std_min, self.log_std_max)
+                output = (mean, torch.exp(log_std))
+
+        return output
 
     def get_init_action(self, action):
         """the action should be initialized, directly cloned from the nearest joint.
@@ -168,8 +180,11 @@ class Fmodel(nn.Module):
 class Imodel(nn.Module):
     def __init__(self, opt):
         super(Imodel, self).__init__()
+        self.opt = opt
         self.state_dim = opt.state_dim2
         self.action_dim = opt.action_dim2
+
+        self.output_dim = self.action_dim if self.opt.deterministic else self.action_dim * 2
         self.statefc = nn.Sequential(
             nn.Linear(self.state_dim, 64),
             nn.ReLU(),
@@ -178,15 +193,23 @@ class Imodel(nn.Module):
         self.predfc = nn.Sequential(
             nn.Linear(256, 64),
             nn.ReLU(),
-            nn.Linear(64, self.action_dim),
-            nn.Tanh()
+            nn.Linear(64, self.output_dim)
         )
+        self.log_std_min = -20.
+        self.log_std_max = 2.
 
     def forward(self, now_state, next_state):
         now_state_feature = self.statefc(now_state)
         next_state_feature = self.statefc(next_state)
         feature = torch.cat((now_state_feature, next_state_feature), 1)
-        return self.predfc(feature)
+        prediction = self.predfc(feature)
+        if self.opt.deterministic:
+            output = torch.tanh(prediction)
+        else:
+            mean, log_std = torch.chunk(prediction, 2, 1)
+            log_std = torch.clamp(log_std, self.log_std_min, self.log_std_max)
+            output = (mean, torch.exp(log_std))
+        return output
 
 
 class Fengine:
@@ -273,7 +296,18 @@ class Iengine:
                 result = torch.tensor(act[start:end]).float().cuda()
                 next_state = torch.tensor(nxt[start:end]).float().cuda()
 
-                out = self.imodel(state, next_state)
+                prediction = self.imodel(state, next_state)
+                if self.opt.deterministic:
+                    out = prediction
+                else:
+                    mean, std = prediction
+                    sample_mean = torch.zeros(mean.size(), dtype=torch.float32,
+                                              device='cuda')
+                    sample_std = torch.ones(std.size(), dtype=torch.float32,
+                                            device='cuda')
+                    pre_tanh = (mean + std * Normal(sample_mean, sample_std).sample())
+                    out = torch.tanh(pre_tanh)
+                    out.requires_grad_()
                 loss = loss_fn(out, result)
                 optimizer.zero_grad()
                 loss.backward()

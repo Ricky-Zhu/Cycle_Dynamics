@@ -30,7 +30,8 @@ def get_options():
 
     parser.add_argument('--loss', default='l1', type=str)
     parser.add_argument('--istrain', default=True, type=bool)
-    parser.add_argument('--pretrain_i', default=True, type=bool)
+    parser.add_argument('--pretrain_i', default=False, type=bool)
+    parser.add_argument('--deterministic', default=False, type=bool)
     parser.add_argument('--start_train', action='store_true')
 
     parser.add_argument('--lr_Gx', default=1e-4, type=float)
@@ -42,7 +43,7 @@ def get_options():
     parser.add_argument('--lambda_GactB', default=10., type=float)
     parser.add_argument('--lambda_Gcyc', default=30., type=float)
     parser.add_argument('--lambda_F', default=50., type=float)
-    parser.add_argument('--init_start', default=True, type=bool)
+    parser.add_argument('--init_start', default=False, type=bool)
     parser.add_argument('--seed', default=10, type=int)
 
     args = parser.parse_args()
