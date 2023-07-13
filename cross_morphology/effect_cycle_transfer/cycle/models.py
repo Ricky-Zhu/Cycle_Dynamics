@@ -283,7 +283,7 @@ class Iengine:
         now, act, nxt = dataset
         batch_size = 32
         data_size = int(now.shape[0] / batch_size)
-        for epoch in tqdm(range(10)):
+        for epoch in range(10):
             if epoch in [3, 7, 10, 15]:
                 lr *= 0.5
                 optimizer = torch.optim.Adam(self.imodel.parameters(), lr=lr)
@@ -293,7 +293,7 @@ class Iengine:
             now = now[idx]
             act = act[idx]
             nxt = nxt[idx]
-            for i in range(data_size):
+            for i in tqdm(range(data_size)):
                 start = i * batch_size
                 end = start + batch_size
                 state = torch.tensor(now[start:end]).float().cuda()
