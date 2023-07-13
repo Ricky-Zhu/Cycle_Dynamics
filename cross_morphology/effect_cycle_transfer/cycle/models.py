@@ -5,7 +5,7 @@ import numpy as np
 from tqdm import tqdm
 from torch.distributions.normal import Normal
 import torch.nn as nn
-
+from tqdm import tqdm
 
 class S2S(nn.Module):
     def __init__(self, opt, dir='1to2'):
@@ -193,7 +193,7 @@ class Imodel(nn.Module):
         self.predfc = nn.Sequential(
             nn.Linear(256, 64),
             nn.ReLU(),
-            nn.Linear(64, self.output_dim)
+            nn.Linear(64, self.output_dim),
         )
         self.log_std_min = -20.
         self.log_std_max = 2.
@@ -268,7 +268,11 @@ class Iengine:
     def train_statef(self, dataset):
         self.env_logs = os.path.join(self.opt.log_root, 'data/{}_data'.format(self.opt.target_env))
         self.data_root2 = os.path.join(self.env_logs, '{}'.format(self.opt.data_id2))
-        weight_path = os.path.join(self.data_root2, 'inverse.pth')
+        if self.opt.deterministic:
+            suffix = 'deterministic'
+        else:
+            suffix = 'stochastic'
+        weight_path = os.path.join(self.data_root2, 'inverse_{}.pth'.format(suffix))
         if self.opt.pretrain_i:
             self.imodel.load_state_dict(torch.load(weight_path))
             print('load the pretrained inverse dynamics model in the target domain')
@@ -279,7 +283,7 @@ class Iengine:
         now, act, nxt = dataset
         batch_size = 32
         data_size = int(now.shape[0] / batch_size)
-        for epoch in range(10):
+        for epoch in tqdm(range(10)):
             if epoch in [3, 7, 10, 15]:
                 lr *= 0.5
                 optimizer = torch.optim.Adam(self.imodel.parameters(), lr=lr)
@@ -298,7 +302,7 @@ class Iengine:
 
                 prediction = self.imodel(state, next_state)
                 if self.opt.deterministic:
-                    out = prediction
+                    out = torch.tanh(prediction)
                 else:
                     mean, std = prediction
                     sample_mean = torch.zeros(mean.size(), dtype=torch.float32,

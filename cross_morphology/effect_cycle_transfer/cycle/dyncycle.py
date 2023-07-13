@@ -170,8 +170,8 @@ class CycleGANModel():
             loss_action = self.criterionCycle(target_action - pred_fake_target_action, label) * lambda_F
 
         else:
-            loss_action = self.compute_kl(pred_fake_target_action, target_action).mean() * lambda_F
-        # # GAN loss D_B(G_B(B))
+            loss_action = self.compute_kl(pred_fake_target_action, target_action).mean()
+            # # GAN loss D_B(G_B(B))
         # fake_At1 = self.netF_A(fake_At0, fake_action_A)
         # pred_fake = self.netD_B(fake_At1)
         # loss_G_Bt1 = self.criterionGAN(pred_fake, True) * lambda_G_B1
@@ -275,12 +275,18 @@ class CycleGANModel():
         network.load_state_dict(torch.load(weight_path))
 
     def load(self, path):
-        self.load_network(self.netG_B, 'G_B', path)
-        self.load_network(self.netD_B, 'D_B', path)
-        self.load_network(self.net_action_G_B, 'G_act_B', path)
-        self.load_network(self.net_action_G_A, 'G_act_A', path)
-        self.load_network(self.net_action_D_A, 'D_act_A', path)
-        self.load_network(self.net_action_D_B, 'D_act_B', path)
+
+        self.load_network(self.netG_2to1, 'G_B2A', path)
+        self.load_network(self.netG_1to2, 'G_A2B', path)
+        self.load_network(self.net_action_G_1to2, 'G_act_A2B', path)
+        self.load_network(self.netD_1, 'D_A', path)
+        self.load_network(self.netD_2, 'D_B', path)
+        # self.load_network(self.netG_B, 'G_B', path)
+        # self.load_network(self.netD_B, 'D_B', path)
+        # self.load_network(self.net_action_G_B, 'G_act_B', path)
+        # self.load_network(self.net_action_G_A, 'G_act_A', path)
+        # self.load_network(self.net_action_D_A, 'D_act_A', path)
+        # self.load_network(self.net_action_D_B, 'D_act_B', path)
 
     def reset_buffer(self):
         self.gt_buffer = []
