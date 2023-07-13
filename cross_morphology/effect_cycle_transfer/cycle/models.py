@@ -5,7 +5,6 @@ import numpy as np
 from tqdm import tqdm
 import torch.nn as nn
 
-
 class S2S(nn.Module):
     def __init__(self, opt, dir='1to2'):
         super(S2S, self).__init__()
@@ -266,7 +265,7 @@ class Iengine:
             now = now[idx]
             act = act[idx]
             nxt = nxt[idx]
-            for i in range(data_size):
+            for i in tqdm(range(data_size)):
                 start = i * batch_size
                 end = start + batch_size
                 state = torch.tensor(now[start:end]).float().cuda()
