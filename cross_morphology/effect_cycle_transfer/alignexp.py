@@ -27,7 +27,7 @@ def setup_wandb(args):
     current_date = datetime.today().strftime('%Y-%m-%d-%H-%M-%S')
     wandb.login()
     wandb.init(
-        project="cdat_{}_{}".format(args.env, args.target_env),
+        project="cdat_det_{}_{}".format(args.env, args.target_env),
         config=vars(args),
         name="cdat_{}".format(current_date)
     )
@@ -116,6 +116,7 @@ def train(args):
                     f.close()
                 if args.start_train:
                     wandb.log({'iter_{}/g/eval'.format(iteration): reward})
+                    wandb.log({'best_reward': best_reward})
                     wandb.log({'iter_{}/g/err_mean'.format(iteration): xy_err_rec.err_mean,
                                'iter_{}/g/err_var'.format(iteration): xy_err_rec.err_var,
                                'iter_{}/g/err_max'.format(iteration): xy_err_rec.err_max}
@@ -183,6 +184,7 @@ def train(args):
                                'iter_{}/a/err_var'.format(iteration): xy_err_rec.err_var,
                                'iter_{}/a/err_max'.format(iteration): xy_err_rec.err_max}
                               )
+                    wandb.log({'best_reward': best_reward})
                 xy_err_rec.reset()
                 eval_display = '\nA part iteration {} best_reward:{:.1f}  cur_reward:{:.1f}'.format(iteration,
                                                                                                     best_reward,
@@ -197,24 +199,6 @@ def train(args):
     f = open(log_dirs + '/xy_pos_final.txt', 'wb')
     pickle.dump(xy_pos, f)
     f.close()
-
-
-# def test(args):
-#     args.istrain = False
-#     args.init_start = False
-#     txt_logs, img_logs, weight_logs = init_logs(args)
-#     data_agent = CycleData(args)
-#     model = CycleGANModel(args)
-#     model.fengine.train_statef(data_agent.data1)
-#     print(weight_logs)
-#     model.load(weight_logs)
-#     model.update(args)
-#
-#     model.cross_policy.eval_policy(
-#         gxmodel=model.netG_B,
-#         axmodel=model.net_action_G_A,
-#         # imgpath=img_logs,
-#         eval_episodes=10)
 
 
 if __name__ == '__main__':
@@ -235,6 +219,4 @@ if __name__ == '__main__':
     env.close()
 
     train(args)
-    # args.istrain = False
-    # with torch.no_grad():
-    #     test(args)
+
