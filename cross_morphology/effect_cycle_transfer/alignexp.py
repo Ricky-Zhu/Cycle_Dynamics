@@ -33,9 +33,6 @@ def setup_wandb(args):
     )
 
 
-setup_seed(0)
-
-
 def add_errors(model, display):
     errors = model.get_current_errors()
     for key, value in errors.items():
@@ -57,7 +54,7 @@ def train(args):
     model.cross_policy.eval_policy(
         gxmodel=model.netG_2to1,
         axmodel=model.net_action_G_1to2,
-        eval_episodes=10)
+        eval_episodes=args.eval_n)
 
     best_reward = 0
 
@@ -203,6 +200,7 @@ def train(args):
 
 if __name__ == '__main__':
     args = get_options()
+    setup_seed(args.seed)
 
     # source env information
     env_name = args.env
@@ -219,4 +217,3 @@ if __name__ == '__main__':
     env.close()
 
     train(args)
-
