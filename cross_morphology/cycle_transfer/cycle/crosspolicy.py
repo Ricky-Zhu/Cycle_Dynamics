@@ -86,7 +86,7 @@ class CrossPolicy:
                           self.max_action,
                           self.opt)
         self.env = gym.make(self.env_name)
-        self.env.seed(100)
+        self.env.seed(opt.seed)
 
     def eval_policy(self,
                     gxmodel=None,

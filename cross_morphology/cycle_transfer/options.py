@@ -26,7 +26,7 @@ def get_options():
     parser.add_argument('--pair_n', default=7000, type=int)
     parser.add_argument('--display_gap', default=1000, type=int)
     parser.add_argument('--eval_gap', default=1000, type=int)
-    parser.add_argument('--eval_n', default=5, type=int)
+    parser.add_argument('--eval_n', default=10, type=int)
 
     parser.add_argument('--loss', default='l1', type=str)
     parser.add_argument('--istrain', default=True, type=bool)
@@ -41,6 +41,7 @@ def get_options():
     parser.add_argument('--lambda_Gcyc', default=30., type=float)
     parser.add_argument('--lambda_F', default=100., type=float)
     parser.add_argument('--init_start', default=True, type=bool)
+    parser.add_argument('--seed', default=100, type=int)
 
     args = parser.parse_args()
 

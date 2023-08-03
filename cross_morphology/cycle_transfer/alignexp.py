@@ -22,9 +22,6 @@ def setup_seed(seed):
     torch.backends.cudnn.deterministic = True
 
 
-setup_seed(0)
-
-
 def add_errors(model, display):
     errors = model.get_current_errors()
     for key, value in errors.items():
@@ -142,6 +139,8 @@ def train(args):
 
 if __name__ == '__main__':
     args = get_options()
+
+    setup_seed(args.seed)
 
     # source env information
     env_name = args.env
