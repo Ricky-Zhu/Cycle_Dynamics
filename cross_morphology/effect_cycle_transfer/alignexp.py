@@ -45,6 +45,7 @@ def train(args):
     data_agent = CycleData(args)  # normalize and initial the pre-collected source and target domain data
     model = CycleGANModel(args)  # initialize all the needed networks
     model.iengine.train_statef(data_agent.data2)  # train the target inverse dynamics
+    model.iengine_1.train_statef(data_agent.data1)  # train the source inverse dynamics
 
     xy_err_rec = error_rec(x_arg=0, y_arg=1)
     if args.start_train:

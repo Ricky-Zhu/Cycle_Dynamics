@@ -5,6 +5,7 @@ import numpy as np
 from tqdm import tqdm
 import torch.nn as nn
 
+
 class S2S(nn.Module):
     def __init__(self, opt, dir='1to2'):
         super(S2S, self).__init__()
@@ -165,10 +166,14 @@ class Fmodel(nn.Module):
 
 
 class Imodel(nn.Module):
-    def __init__(self, opt):
+    def __init__(self, opt, to_type='target'):
         super(Imodel, self).__init__()
-        self.state_dim = opt.state_dim2
-        self.action_dim = opt.action_dim2
+        if to_type == 'target':
+            self.state_dim = opt.state_dim2
+            self.action_dim = opt.action_dim2
+        else:
+            self.state_dim = opt.state_dim1
+            self.action_dim = opt.action_dim1
         self.statefc = nn.Sequential(
             nn.Linear(self.state_dim, 64),
             nn.ReLU(),
@@ -237,14 +242,21 @@ class Fengine:
 
 
 class Iengine:
-    def __init__(self, opt):
-        self.imodel = Imodel(opt).cuda()
+    def __init__(self, opt, to_type='target'):
+        self.imodel = Imodel(opt, to_type=to_type).cuda()
+        self.to_type = to_type
         self.opt = opt
 
     def train_statef(self, dataset):
-        self.env_logs = os.path.join(self.opt.log_root, 'data/{}_data'.format(self.opt.target_env))
-        self.data_root2 = os.path.join(self.env_logs, '{}'.format(self.opt.data_id2))
-        weight_path = os.path.join(self.data_root2, 'inverse.pth')
+        if self.to_type == 'target':
+            self.env_logs = os.path.join(self.opt.log_root, 'data/{}_data'.format(self.opt.target_env))
+            self.data_root2 = os.path.join(self.env_logs, '{}'.format(self.opt.data_id2))
+            weight_path = os.path.join(self.data_root2, 'inverse.pth')
+        else:
+            self.env_logs = os.path.join(self.opt.log_root, 'data/{}_data'.format(self.opt.env))
+            self.data_root2 = os.path.join(self.env_logs, '{}'.format(self.opt.data_id1))
+            weight_path = os.path.join(self.data_root2, 'inverse.pth')
+
         if self.opt.pretrain_i:
             self.imodel.load_state_dict(torch.load(weight_path))
             print('load the pretrained inverse dynamics model in the target domain')
@@ -280,5 +292,5 @@ class Iengine:
                 epoch_loss += loss.item()
 
             torch.save(self.imodel.state_dict(), weight_path)
-        print('target domain inverse dynamics model training loss:{:.7f} '.format(epoch_loss / data_size
-                                                                                  ))
+        print('{} domain inverse dynamics model training loss:{:.7f} '.format(self.to_type, epoch_loss / data_size
+                                                                              ))

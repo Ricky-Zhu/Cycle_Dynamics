@@ -30,9 +30,15 @@ class CycleGANModel():
         # action mapping: source -> target
         self.net_action_G_1to2 = AGmodel(opt, '1to2').cuda()  # map: source state X action -> target action
 
+        # action mapping: target -> source
+        self.net_action_G_2to1 = AGmodel(opt, '2to1').cuda()
+
         # target inverse dynamics model
-        self.iengine = Iengine(opt)  # y_t x y_t+1 -> u_t
+        self.iengine = Iengine(opt, to_type='target')  # y_t x y_t+1 -> u_t
         self.netI_2 = self.iengine.imodel.cuda()
+
+        self.iengine_1 = Iengine(opt, to_type='source')
+        self.netI_1 = self.iengine_1.imodel.cuda()
 
         self.reset_buffer()
         # source state discriminator
@@ -53,6 +59,7 @@ class CycleGANModel():
             self.criterionIdt = torch.nn.MSELoss()
         # initialize optimizers
         self.optimizer_G = torch.optim.Adam([{'params': self.netI_2.parameters(), 'lr': 0.0},
+                                             {'params': self.netI_1.parameters(), 'lr': 0.0},
                                              {'params': self.net_action_G_1to2.parameters(), 'lr': opt.lr_Ax},
                                              {'params': self.netG_1to2.parameters(), 'lr': opt.lr_Gx},
                                              {'params': self.netG_2to1.parameters(), 'lr': opt.lr_Gx}])
@@ -69,6 +76,7 @@ class CycleGANModel():
         self.init_start = opt.init_start
         self.net_action_G_1to2.init_start = opt.init_start
         self.optimizer_G = torch.optim.Adam([{'params': self.netI_2.parameters(), 'lr': 0.0},
+                                             {'params': self.netI_1.parameters(), 'lr': 0.0},
                                              {'params': self.net_action_G_1to2.parameters(), 'lr': opt.lr_Ax},
                                              {'params': self.netG_1to2.parameters(), 'lr': opt.lr_Gx},
                                              {'params': self.netG_2to1.parameters(), 'lr': opt.lr_Gx}])
@@ -161,27 +169,26 @@ class CycleGANModel():
         # ***************************
         fake_target_t0 = self.netG_1to2(self.real_At0)
         fake_target_t1 = self.netG_1to2(self.real_At1)
-        target_action = self.netI_2(fake_target_t0, fake_target_t1)
+        target_action_2 = self.netI_2(fake_target_t0, fake_target_t1)
 
-        pred_fake_target_action = self.net_action_G_1to2(self.real_At0, self.action_A)
-        label = torch.zeros_like(pred_fake_target_action).float().cuda()
-        loss_action = self.criterionCycle(target_action - pred_fake_target_action, label) * lambda_F
+        pred_fake_target_action_2 = self.net_action_G_1to2(self.real_At0, self.action_A)
+        label_2 = torch.zeros_like(pred_fake_target_action_2).float().cuda()
+        loss_action_2 = self.criterionCycle(target_action_2 - pred_fake_target_action_2, label_2) * lambda_F
 
-        # # GAN loss D_B(G_B(B))
-        # fake_At1 = self.netF_A(fake_At0, fake_action_A)
-        # pred_fake = self.netD_B(fake_At1)
-        # loss_G_Bt1 = self.criterionGAN(pred_fake, True) * lambda_G_B1
-        #
-        # # dynamics cycle loss
-        # pred_At1 = self.netG_B(self.real_Bt1)
-        # cycle_label = torch.zeros_like(fake_At1).float().cuda()
-        # loss_cycle = self.criterionCycle(fake_At1 - pred_At1, cycle_label) * lambda_F
+        fake_source_t0 = self.netG_2to1(self.real_Bt0)
+        fake_source_t1 = self.netG_2to1(self.real_Bt1)
+        target_action_1 = self.netI_1(fake_source_t0, fake_source_t1)
+
+        pred_fake_target_action_1 = self.net_action_G_2to1(self.real_Bt0, self.action_B)
+        label_1 = torch.zeros_like(pred_fake_target_action_1).float().cuda()
+        loss_action_1 = self.criterionCycle(target_action_1 - pred_fake_target_action_1, label_1) * lambda_F
 
         # ***************************
         #       loss backward part
         # ***************************
 
         # combined loss
+        loss_action = loss_action_1 + loss_action_2
         loss_G = loss_G_Bt0 + loss_G_At0 + loss_cycle
         loss = loss_G + loss_action
 
