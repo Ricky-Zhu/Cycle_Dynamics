@@ -261,6 +261,7 @@ class CycleGANModel():
         self.save_network(self.netG_2to1, 'G_B2A', path)
         self.save_network(self.netG_1to2, 'G_A2B', path)
         self.save_network(self.net_action_G_1to2, 'G_act_A2B', path)
+        self.save_network(self.net_action_G_2to1, 'G_act_B2A', path)
         self.save_network(self.netD_1, 'D_A', path)
         self.save_network(self.netD_2, 'D_B', path)
 
@@ -270,12 +271,12 @@ class CycleGANModel():
         network.load_state_dict(torch.load(weight_path))
 
     def load(self, path):
-        self.load_network(self.netG_B, 'G_B', path)
-        self.load_network(self.netD_B, 'D_B', path)
-        self.load_network(self.net_action_G_B, 'G_act_B', path)
-        self.load_network(self.net_action_G_A, 'G_act_A', path)
-        self.load_network(self.net_action_D_A, 'D_act_A', path)
-        self.load_network(self.net_action_D_B, 'D_act_B', path)
+        self.load_network(self.netG_2to1, 'G_B2A', path)
+        self.load_network(self.netG_1to2, 'G_A2B', path)
+        self.load_network(self.net_action_G_1to2, 'G_act_A2B', path)
+        self.load_network(self.net_action_G_2to1, 'G_act_B2A', path)
+        self.load_network(self.netD_1, 'D_A', path)
+        self.load_network(self.netD_2, 'D_B', path)
 
     def reset_buffer(self):
         self.gt_buffer = []
