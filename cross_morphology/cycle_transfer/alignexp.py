@@ -41,11 +41,11 @@ def train(args):
     model.cross_policy.eval_policy(
         gxmodel=model.netG_B,
         axmodel=model.net_action_G_A,
-        eval_episodes=10)
+        eval_episodes=args.eval_n)
 
     best_reward = 0
 
-    for iteration in range(5):
+    for iteration in range(3):
         cprint('###### iteration {} #######'.format(iteration + 1), 'red', 'on_blue')
 
         args.lr_Gx = 1e-4
