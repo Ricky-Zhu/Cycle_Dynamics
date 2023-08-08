@@ -25,8 +25,8 @@ def eval_policy(policy, env_name, seed, eval_episodes=10):
         while not done:
             action = policy.select_action(np.array(state))
             state, reward, done, info = eval_env.step(action)
-            # avg_reward += reward
-            avg_reward += info['reward_fwd']
+            avg_reward += reward
+            # avg_reward += info['reward_fwd']
 
     avg_reward /= eval_episodes
 
@@ -97,7 +97,7 @@ if __name__ == "__main__":
     parser.add_argument("--noise_clip", default=0.5)  # Range to clip target policy noise
     parser.add_argument("--policy_freq", default=2, type=int)  # Frequency of delayed policy updates
 
-    parser.add_argument("--log_root", default="../../../../../../cross_dynamics")
+    parser.add_argument("--log_root", default="/home/ruiqi/")
     parser.add_argument("--load_model", default="default")  # Model load file name, "" doesn't load, "default" uses file_name
     args = parser.parse_args()
 

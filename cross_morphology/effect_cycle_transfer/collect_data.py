@@ -63,7 +63,7 @@ class CycleData:
     def __init__(self, opt, path=None, suffix=None):
         self.opt = opt
         self.env = gym.make(opt.env)
-        self.env.seed(0)
+        #self.env.seed(0)
         random.seed(0)
         self.state_dim = self.env.observation_space.shape[0]
         self.action_dim = self.env.action_space.shape[0]
@@ -174,7 +174,7 @@ class CycleData:
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='control dataset analyzer')
-    parser.add_argument("--env", default="HalfCheetah-v2")
+    parser.add_argument("--env", default="Panda-v2")
     parser.add_argument("--force", type=bool, default=False)
     parser.add_argument("--log_root", default="../../logs/cross_morphology_effect/data")
     # parser.add_argument('--data_type', type=str, default='3leg', help='data type')
@@ -183,6 +183,6 @@ if __name__ == '__main__':
 
     opt = parser.parse_args()
 
-    path = '../../logs/cross_morphology_effect/HalfCheetah-v2_base/models/TD3_HalfCheetah-v2_0_actor'
-    suffix = 'expert_data'
-    dataset = CycleData(opt,path,suffix)
+    # path = '../../logs/cross_morphology_effect/HalfCheetah-v2_base/models/TD3_HalfCheetah-v2_0_actor'
+    # suffix = 'expert_data'
+    dataset = CycleData(opt)
