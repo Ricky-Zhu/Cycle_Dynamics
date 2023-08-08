@@ -60,7 +60,7 @@ class TD3(object):
 
 
 class CycleData:
-    def __init__(self, opt, path=None, suffix=None):
+    def __init__(self, opt, path=None, suffix=''):
         self.opt = opt
         self.env = gym.make(opt.env)
         #self.env.seed(0)
@@ -86,7 +86,7 @@ class CycleData:
     def setup(self, opt):
         self.episode_n = opt.episode_n
         self.env_logs = safe_path(os.path.join(self.log_root, '{}_data'.format(self.opt.env)))
-        self.data_root = safe_path(os.path.join(self.env_logs, '{}_{}'.format(self.opt.data_id, self.suffix)))
+        self.data_root = safe_path(os.path.join(self.env_logs, '{}{}'.format(self.opt.data_id, self.suffix)))
         self.img_path = safe_path(os.path.join(self.data_root, 'imgs'))
 
     def create_data(self):
