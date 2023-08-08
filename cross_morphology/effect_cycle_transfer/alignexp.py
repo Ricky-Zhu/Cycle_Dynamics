@@ -47,7 +47,6 @@ def train(args):
     model.iengine.train_statef(data_agent.data2)  # train the target inverse dynamics
     model.iengine_1.train_statef(data_agent.data1)  # train the source inverse dynamics
 
-    xy_err_rec = error_rec(x_arg=0, y_arg=1)
     if args.start_train:
         setup_wandb(args)
 
@@ -55,7 +54,8 @@ def train(args):
     model.cross_policy.eval_policy(
         gxmodel=model.netG_2to1,
         axmodel=model.net_action_G_1to2,
-        eval_episodes=args.eval_n)
+        eval_episodes=args.eval_n,
+        eval_type=args.eval_type)
 
     best_reward = 0
 
@@ -95,31 +95,17 @@ def train(args):
                     gxmodel=model.netG_2to1,
                     axmodel=model.net_action_G_1to2,
                     eval_episodes=args.eval_n,
-                    err_rec=xy_err_rec)
-
-                print('err mean:{} err var:{} err max:{}'.format(xy_err_rec.err_mean, xy_err_rec.err_var,
-                                                                 xy_err_rec.err_max))
+                    eval_type=args.eval_type
+                )
 
                 if reward > best_reward:
                     best_reward = reward
                     model.save(weight_logs)
-                    # save the x y pos
-                    _, xy_pos = model.cross_policy.eval_policy(
-                        gxmodel=model.netG_2to1,
-                        axmodel=model.net_action_G_1to2,
-                        eval_episodes=1,
-                        return_xy_pos=True)
-                    f = open(log_dirs + '/xy_pos_best.txt', 'wb')
-                    pickle.dump(xy_pos, f)
-                    f.close()
+
                 if args.start_train:
                     wandb.log({'iter_{}/g/eval'.format(iteration): reward})
                     wandb.log({'best_reward': best_reward})
-                    wandb.log({'iter_{}/g/err_mean'.format(iteration): xy_err_rec.err_mean,
-                               'iter_{}/g/err_var'.format(iteration): xy_err_rec.err_var,
-                               'iter_{}/g/err_max'.format(iteration): xy_err_rec.err_max}
-                              )
-                xy_err_rec.reset()
+
                 eval_display = '\n G part iteration {} best_reward:{:.1f}  cur_reward:{:.1f}'.format(iteration,
                                                                                                      best_reward,
                                                                                                      reward)
@@ -158,45 +144,15 @@ def train(args):
                 reward = model.cross_policy.eval_policy(
                     gxmodel=model.netG_2to1,
                     axmodel=model.net_action_G_1to2,
-                    eval_episodes=args.eval_n,
-                    err_rec=xy_err_rec)
-                if reward > best_reward:
-                    best_reward = reward
-                    model.save(weight_logs)
-                    _, xy_pos = model.cross_policy.eval_policy(
-                        gxmodel=model.netG_2to1,
-                        axmodel=model.net_action_G_1to2,
-                        eval_episodes=1,
-                        return_xy_pos=True,
-                    )
-                    f = open(log_dirs + '/xy_pos_best.txt', 'wb')
-                    pickle.dump(xy_pos, f)
-                    f.close()
-
-                print('err mean:{} err var:{} err max:{}'.format(xy_err_rec.err_mean, xy_err_rec.err_var,
-                                                                 xy_err_rec.err_max))
+                    eval_episodes=args.eval_n)
 
                 if args.start_train:
                     wandb.log({'iter_{}/a/eval'.format(iteration): reward})
-                    wandb.log({'iter_{}/a/err_mean'.format(iteration): xy_err_rec.err_mean,
-                               'iter_{}/a/err_var'.format(iteration): xy_err_rec.err_var,
-                               'iter_{}/a/err_max'.format(iteration): xy_err_rec.err_max}
-                              )
                     wandb.log({'best_reward': best_reward})
-                xy_err_rec.reset()
                 eval_display = '\nA part iteration {} best_reward:{:.1f}  cur_reward:{:.1f}'.format(iteration,
                                                                                                     best_reward,
                                                                                                     reward)
                 print(eval_display)
-
-    _, xy_pos = model.cross_policy.eval_policy(
-        gxmodel=model.netG_2to1,
-        axmodel=model.net_action_G_1to2,
-        eval_episodes=1,
-        return_xy_pos=True)
-    f = open(log_dirs + '/xy_pos_final.txt', 'wb')
-    pickle.dump(xy_pos, f)
-    f.close()
 
 
 if __name__ == '__main__':

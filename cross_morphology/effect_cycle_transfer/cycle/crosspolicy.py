@@ -99,10 +99,11 @@ class CrossPolicy:
                     imgpath=None,
                     eval_episodes=10,
                     return_xy_pos=False,
-                    err_rec=None):
+                    err_rec=None,
+                    eval_type='mujoco'):
         x_pos = []
         y_pos = []
-
+        success_count = 0
         eval_env = self.env
         state_buffer = []
         action_buffer = []
@@ -132,6 +133,9 @@ class CrossPolicy:
                 state_buffer.append(state)
                 action_buffer.append(action)
                 state, reward, done, info = eval_env.step(action)
+                if eval_type == 'robot':
+                    if info['success']:
+                        success_count += 1
 
                 avg_reward += reward
                 if return_xy_pos:
@@ -149,6 +153,10 @@ class CrossPolicy:
                     Image.fromarray(img[::-1, :, :]).save(os.path.join(episode_path, 'img_{}.jpg'.format(count)))
                 count += 1
         avg_reward /= eval_episodes
+
+        if eval_type == 'robot':
+            if success_count != 0:
+                print('success rate {}'.format(success_count / float(eval_episodes)))
 
         # print("-----------------------------------------------")
         # print(f"Evaluation over {eval_episodes} episodes: {avg_reward:.3f}")

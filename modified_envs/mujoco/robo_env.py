@@ -273,6 +273,9 @@ class Reach(SingleArmEnv):
 
         return reward
 
+    def seed(self, seed):
+        pass
+
     def _load_model(self):
         """
         Loads an xml model, puts it in self.model
@@ -488,6 +491,8 @@ class ReachWrapper(Wrapper):
         return obs_
 
     def step(self, action):
+        if action.ndim > 1:
+            action = action[0]
         obs, reward, done, info = self.env.step(action)
         return self._process_obs(obs), reward, done, info
 

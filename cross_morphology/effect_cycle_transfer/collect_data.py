@@ -63,7 +63,7 @@ class CycleData:
     def __init__(self, opt, path=None, suffix=''):
         self.opt = opt
         self.env = gym.make(opt.env)
-        #self.env.seed(0)
+        self.env.seed(0)
         random.seed(0)
         self.state_dim = self.env.observation_space.shape[0]
         self.action_dim = self.env.action_space.shape[0]

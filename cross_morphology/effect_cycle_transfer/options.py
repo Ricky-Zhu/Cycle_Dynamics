@@ -6,8 +6,8 @@ def get_options():
     parser = argparse.ArgumentParser()
     parser.add_argument('--log_root', default='../../logs/cross_morphology_effect', type=str)
     parser.add_argument('--exp_id', default=10, type=int)
-    parser.add_argument("--env", default="HalfCheetah-v2")
-    parser.add_argument("--target_env", default="HalfCheetah_3leg-v2")
+    parser.add_argument("--env", default="UR5e-v2")
+    parser.add_argument("--target_env", default="Panda-v2")
     # parser.add_argument('--data_type1', type=str, default='base', help='data type')
     # parser.add_argument('--data_type2', type=str, default='3leg', help='data type')
     parser.add_argument('--data_id1', type=str, default=str('1'), help='data id')
@@ -42,8 +42,9 @@ def get_options():
     parser.add_argument('--lambda_GactB', default=10., type=float)
     parser.add_argument('--lambda_Gcyc', default=30., type=float)
     parser.add_argument('--lambda_F', default=50., type=float)
-    parser.add_argument('--init_start', default=True, type=bool)
+    parser.add_argument('--init_start', default=False, type=bool)
     parser.add_argument('--seed', default=10, type=int)
+    parser.add_argument('--eval_type', default='robot', type=str)
 
     args = parser.parse_args()
 
