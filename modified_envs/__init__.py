@@ -15,13 +15,32 @@ register(
 )
 
 register(
+    id='Ant_5leg-v2',
+    entry_point='modified_envs.mujoco:AntModifiedEnv',
+    max_episode_steps=1000,
+    reward_threshold=6000.0,
+)
+
+register(
     id='UR5e-v2',
     entry_point='modified_envs.mujoco:create_robot_env',
-    kwargs={'robot_name': 'UR5e'}
+    kwargs={'robot_name': 'UR5e', 'gripper': True}
 )
 
 register(
     id='Panda-v2',
     entry_point='modified_envs.mujoco:create_robot_env',
-    kwargs={'robot_name': 'Panda'}
+    kwargs={'robot_name': 'Panda', 'gripper': True}
+)
+
+register(
+    id='Jaco-v2',
+    entry_point='modified_envs.mujoco:create_robot_env',
+    kwargs={'robot_name': 'Jaco'}
+)
+
+register(
+    id='Kinova3-v2',
+    entry_point='modified_envs.mujoco:create_robot_env',
+    kwargs={'robot_name': 'Kinova3'}
 )

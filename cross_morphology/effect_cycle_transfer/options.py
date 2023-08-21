@@ -44,7 +44,7 @@ def get_options():
     parser.add_argument('--lambda_F', default=50., type=float)
     parser.add_argument('--init_start', default=False, type=bool)
     parser.add_argument('--seed', default=10, type=int)
-    parser.add_argument('--eval_type', default='robot', type=str)
+    parser.add_argument('--eval_type', default='robot', type=str, help="robot or mujoco")
 
     args = parser.parse_args()
 

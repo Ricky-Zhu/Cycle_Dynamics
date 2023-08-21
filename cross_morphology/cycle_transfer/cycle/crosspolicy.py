@@ -3,6 +3,7 @@ import torch
 import gym
 import sys
 from os.path import dirname, abspath
+
 sys.path.append(dirname(dirname(dirname(dirname(abspath(__file__))))))
 from modified_envs import *
 import os
@@ -45,7 +46,7 @@ class TD3(object):
         action = self.actor(state).cpu().data.numpy().flatten()
         return action
 
-    def select_cross_action(self, state, gxmodel, axmodel):
+    def select_cross_action(self, state, gxmodel, axmodel, return_tran_state=False):
         state = torch.tensor(state).float().cuda()
         state = (state - self.mean2) / self.std2
 
@@ -59,6 +60,8 @@ class TD3(object):
         action = self.select_action(state)
         action = axmodel(torch.tensor(action).float().cuda().unsqueeze(0))
         action = action.cpu().data.numpy()
+        if return_tran_state:
+            return state, action
         return action
 
     def get_mean_std(self, prefix, data_id):
@@ -92,10 +95,13 @@ class CrossPolicy:
                     gxmodel=None,
                     axmodel=None,
                     imgpath=None,
-                    eval_episodes=10):
+                    error_rec=None,
+                    eval_episodes=10,
+                    return_error_mean=False):
         eval_env = self.env
         state_buffer = []
         action_buffer = []
+        error_mean = []
         avg_reward, new_reward = 0., 0.
         save_flag = False
         if imgpath is not None:
@@ -104,6 +110,9 @@ class CrossPolicy:
             save_flag = True
 
         for i in tqdm(range(eval_episodes)):
+            if error_rec is not None:
+                error_rec.reset()
+            temp_err_mean = []
             state, done = eval_env.reset(), False
             if save_flag:
                 episode_path = os.path.join(imgpath, 'episode_{}'.format(i))
@@ -112,7 +121,10 @@ class CrossPolicy:
             count = 0
             while not done:
                 state = np.array(state)
-                action = self.policy.select_cross_action(state, gxmodel, axmodel)
+                trans_state, action = self.policy.select_cross_action(state, gxmodel, axmodel, return_tran_state=True)
+                if error_rec is not None:
+                    error_rec(state, trans_state)
+                    temp_err_mean.append(error_rec.err_mean)
 
                 state_buffer.append(state)
                 action_buffer.append(action)
@@ -130,10 +142,15 @@ class CrossPolicy:
                     img = eval_env.sim.render(mode='offscreen', camera_name='track', width=256, height=256)
                     Image.fromarray(img[::-1, :, :]).save(os.path.join(episode_path, 'img_{}.jpg'.format(count)))
                 count += 1
+            error_mean.append(temp_err_mean)
         avg_reward /= eval_episodes
 
         print("-----------------------------------------------")
         print(f"Evaluation over {eval_episodes} episodes: {avg_reward:.3f}")
         print("-----------------------------------------------")
-
+        if error_rec is not None:
+            print('err mean:{} err var:{} err max:{}'.format(error_rec.err_mean, error_rec.err_var,
+                                                             error_rec.err_max))
+            if return_error_mean:
+                return avg_reward, error_mean
         return avg_reward

@@ -35,7 +35,7 @@ def train(args):
     txt_logs, img_logs, weight_logs = init_logs(args)
     data_agent = CycleData(args)  # normalize and initial the pre-collected source and target domain data
     model = CycleGANModel(args)  # initialize all the needed networks
-    model.fengine.train_statef(data_agent.data1)  # train the source forward dynamics
+    #model.fengine.train_statef(data_agent.data1)  # train the source forward dynamics
 
     cprint('evaluate the initial transfered policy in the target domain', 'blue')
     model.cross_policy.eval_policy(

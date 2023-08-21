@@ -139,7 +139,7 @@ class Reach(SingleArmEnv):
             robots,
             env_configuration="default",
             controller_configs=None,
-            gripper_types="default",
+            gripper_types=None,
             initialization_noise="default",
             table_full_size=(0.8, 0.8, 0.05),
             table_friction=(1.0, 5e-3, 1e-4),
@@ -504,7 +504,12 @@ class ReachWrapper(Wrapper):
         self.env.render()
 
 
-def create_robot_env(robot_name=None, has_renderer=False):
+def create_robot_env(robot_name=None, gripper=False, has_renderer=True):
+    if gripper:
+        gripper = 'default'
+    else:
+        gripper = None
     return ReachWrapper(
-        Reach(robots=robot_name, has_renderer=has_renderer, has_offscreen_renderer=False, use_camera_obs=False,
+        Reach(robots=robot_name, gripper_types=gripper, has_renderer=has_renderer, has_offscreen_renderer=False,
+              use_camera_obs=False,
               horizon=200, reward_shaping=True))

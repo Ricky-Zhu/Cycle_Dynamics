@@ -72,11 +72,16 @@ class AGmodel(nn.Module):
     def get_init_action(self, action):
         """the action should be initialized, directly cloned from the nearest joint.
         This handcraft is determined by the construction method of new morphology agent."""
-        #TODO check this trick
+        # TODO check this trick
         if self.env == 'Swimmer-v2':
             # 3part -> 4part: 0 1 => 0 1 0
             # 4part -> 3part: 0 1 2 => 0 1
             if self.dir == '1to2':
+                new_action = torch.cat((action, action[:, 0:1]), 1)
+            else:
+                new_action = action[:, :2]
+        elif self.env == 'Swimmer_4part-v2':
+            if self.dir == '2to1':
                 new_action = torch.cat((action, action[:, 0:1]), 1)
             else:
                 new_action = action[:, :2]
@@ -87,6 +92,17 @@ class AGmodel(nn.Module):
                 new_action = torch.cat((action[:, :3], action[:, :3], action[:, 3:6]), 1)
             else:
                 new_action = torch.cat((action[:, :3], action[:, 6:9]), 1)
+        elif self.env == 'HalfCheetah_3leg-v2':
+            if self.dir == '2to1':
+                new_action = torch.cat((action[:, :3], action[:, :3], action[:, 3:6]), 1)
+            else:
+                new_action = torch.cat((action[:, :3], action[:, 6:9]), 1)
+
+        elif self.env == "Ant-v2":
+            if self.dir == '1to2':
+                new_action = torch.cat((action[:, :6], action[:, 4:6], action[:, 6:]), 1)
+            else:
+                new_action = torch.cat((action[:, :6], action[:, 8:]), 1)
         else:
             new_action = action
         return new_action
